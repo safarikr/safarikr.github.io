@@ -343,6 +343,14 @@ function matchesSeriesOption(book, option) {
   return false;
 }
 
+function entryMatchesSeriesOption(id, book, option) {
+  if (Array.isArray(option?.matchIds) && option.matchIds.length) {
+    return option.matchIds.includes(id);
+  }
+
+  return matchesSeriesOption(book, option);
+}
+
 function detectSeriesAudience(book) {
   const text = [book?.age, book?.category, book?.title, book?.summary]
     .filter(Boolean)
@@ -391,8 +399,9 @@ function buildSeriesTextOptions() {
   const coveredLabels = new Set();
 
   presetSeriesOptionSeeds.forEach((seed) => {
-    const matchedBooks = catalogBooks.filter((book) => matchesSeriesOption(book, seed));
-    const totalCount = matchedBooks.length;
+    const matchedEntries = bookEntries.filter(([id, book]) => entryMatchesSeriesOption(id, book, seed));
+    const matchedBooks = matchedEntries.map(([, book]) => book);
+    const totalCount = matchedEntries.length;
 
     if (!totalCount) {
       return;
@@ -404,6 +413,7 @@ function buildSeriesTextOptions() {
       ...seed,
       token: buildSeriesToken(seed.key),
       totalCount,
+      matchIds: matchedEntries.map(([id]) => id),
       audience: resolveOptionAudience(matchedBooks),
     });
   });
@@ -420,8 +430,9 @@ function buildSeriesTextOptions() {
       seriesNames: alias.seriesNames || [label],
       titleIncludes: alias.titleIncludes || [label],
     };
-    const matchedBooks = catalogBooks.filter((book) => matchesSeriesOption(book, seed));
-    const totalCount = matchedBooks.length;
+    const matchedEntries = bookEntries.filter(([id, book]) => entryMatchesSeriesOption(id, book, seed));
+    const matchedBooks = matchedEntries.map(([, book]) => book);
+    const totalCount = matchedEntries.length;
 
     if (!totalCount) {
       return;
@@ -433,6 +444,7 @@ function buildSeriesTextOptions() {
       ...seed,
       token: buildSeriesToken(seed.key),
       totalCount,
+      matchIds: matchedEntries.map(([id]) => id),
       audience: resolveOptionAudience(matchedBooks),
     });
   });
@@ -448,14 +460,16 @@ function buildSeriesTextOptions() {
     .sort((a, b) => a.localeCompare(b, "ko"));
 
   dynamicSeriesNames.forEach((name, index) => {
-    const matchedBooks = catalogBooks.filter((book) => String(book?.series || "").trim() === name);
+    const matchedEntries = bookEntries.filter(([, book]) => String(book?.series || "").trim() === name);
+    const matchedBooks = matchedEntries.map(([, book]) => book);
 
     options.push({
       key: `dynamic-${index}`,
       label: name,
       seriesNames: [name],
       token: buildSeriesToken(`dynamic-${index}`),
-      totalCount: matchedBooks.length,
+      totalCount: matchedEntries.length,
+      matchIds: matchedEntries.map(([id]) => id),
       audience: resolveOptionAudience(matchedBooks),
     });
   });
@@ -579,11 +593,11 @@ function bookMatchesFilter(book) {
   return Array.isArray(book.filters) && book.filters.includes(activeFilter);
 }
 
-function bookMatchesQuery(book) {
+function bookMatchesQuery(id, book) {
   const activeSeriesOption = activeFilter === "series" ? getActiveSeriesOption() : null;
 
   if (activeSeriesOption) {
-    return matchesSeriesOption(book, activeSeriesOption);
+    return entryMatchesSeriesOption(id, book, activeSeriesOption);
   }
 
   if (!activeQuery) {
@@ -1288,7 +1302,7 @@ function renderBooks() {
   }
 
   const filteredEntries = sortFilteredEntries(
-    bookEntries.filter(([, book]) => bookMatchesFilter(book) && bookMatchesQuery(book))
+    bookEntries.filter(([id, book]) => bookMatchesFilter(book) && bookMatchesQuery(id, book))
   );
   const visibleEntries = filteredEntries.slice(0, visibleBookCount);
 
