@@ -141,7 +141,15 @@ const presetSeriesOptionSeeds = [
   {
     key: "geronimo",
     label: "\uC81C\uB85C\uB2C8\uBAA8",
-    seriesNames: ["\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8"],
+    seriesNames: [
+      "\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8",
+      "\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD37C\uB2C8\uC6D4\uB4DC",
+      "\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8 PLUS",
+      "\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8 \uADF8\uB798\uD53D\uB178\uBE14",
+      "\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8 \uB9CC\uD654",
+      "\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8 \uD074\uB798\uC2DD",
+      "\uC288\uD37C\uD788\uC5B4\uB85C\uC988",
+    ],
     titleIncludes: ["\uC81C\uB85C\uB2C8\uBAA8"],
   },
   {
@@ -561,6 +569,10 @@ function resetCatalogView() {
 
 function bookMatchesFilter(book) {
   if (activeFilter === "all") {
+    return true;
+  }
+
+  if (activeFilter === "series") {
     return true;
   }
 
