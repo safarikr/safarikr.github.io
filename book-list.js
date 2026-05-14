@@ -294,10 +294,17 @@ const mergedOfficialSeriesLabels = new Set([
 ]);
 const officialSeriesSource = Array.isArray(window.safariOfficialSeriesData) ? window.safariOfficialSeriesData : [];
 const officialSeriesByLabel = new Map(officialSeriesSource.map((series) => [series.label, series]));
+const seriesAudienceKeys = {
+  age04: "age-0-4",
+  age37: "age-3-7",
+  grade14: "grade-1-4",
+  upperTeen: "grade-upper-teen",
+};
 const seriesAudienceOrder = {
-  infant: 0,
-  preschool: 1,
-  elementary: 2,
+  [seriesAudienceKeys.age04]: 0,
+  [seriesAudienceKeys.age37]: 1,
+  [seriesAudienceKeys.grade14]: 2,
+  [seriesAudienceKeys.upperTeen]: 3,
 };
 const seriesDisplayLabelOverrides = {
   "불빛 그림책 시리즈": "불빛 그림책",
@@ -316,60 +323,60 @@ const customSeriesOptionSeeds = [
       "슈퍼히어로즈",
     ],
     titleIncludes: ["제로니모"],
-    preferredAudience: "elementary",
+    preferredAudience: seriesAudienceKeys.grade14,
   },
   {
     key: "franny",
     label: "프래니",
     officialLabels: ["엽기 과학자 프래니"],
     titleIncludes: ["엽기 과학자 프래니", "엽기과학자 프래니"],
-    preferredAudience: "elementary",
+    preferredAudience: seriesAudienceKeys.grade14,
   },
   {
     key: "lemoncello",
     label: "레몬첼로",
     seriesNames: ["레몬첼로 도서관"],
     titleIncludes: ["레몬첼로"],
-    preferredAudience: "elementary",
+    preferredAudience: seriesAudienceKeys.upperTeen,
   },
   {
     key: "horror-note",
     label: "공포의 노트",
     officialLabels: ["경고! 절대 열면 안 되는 공포의 노트"],
     titleIncludes: ["공포의 노트"],
-    preferredAudience: "elementary",
+    preferredAudience: seriesAudienceKeys.grade14,
   },
   {
     key: "24store",
     label: "24분 편의점",
     officialLabels: ["24분 편의점"],
     titleIncludes: ["24분 편의점"],
-    preferredAudience: "elementary",
+    preferredAudience: seriesAudienceKeys.grade14,
   },
   {
     key: "macmillan",
     label: "맥밀런 월드베스트",
     officialLabels: ["맥밀런 월드베스트 한글"],
-    preferredAudience: "preschool",
+    preferredAudience: seriesAudienceKeys.age37,
   },
   {
     key: "dino",
     label: "공룡 시리즈",
     titleIncludes: ["공룡 구급대", "공룡 자동차", "공룡 해적선", "공룡 우주 로켓", "공룡 농장"],
-    preferredAudience: "preschool",
+    preferredAudience: seriesAudienceKeys.age37,
   },
   {
     key: "the-track",
     label: "더 트랙",
     seriesNames: ["TRACK", "더 트랙"],
     titleIncludes: ["TRACK 1.", "TRACK 2."],
-    preferredAudience: "elementary",
+    preferredAudience: seriesAudienceKeys.upperTeen,
   },
   {
     key: "i-know",
     label: "나는 알아요",
     officialLabels: ["나는 알아요"],
-    preferredAudience: "elementary",
+    preferredAudience: seriesAudienceKeys.grade14,
   },
 ];
 const PAGE_SIZE = Number.MAX_SAFE_INTEGER;
@@ -378,7 +385,7 @@ const seriesTextOptions = buildSeriesTextOptions();
 let activeFilter = "all";
 let activeQuery = "";
 let activeQueryLabel = "";
-let activeSeriesAudience = "elementary";
+let activeSeriesAudience = seriesAudienceKeys.age04;
 let visibleBookCount = PAGE_SIZE;
 let renderSequence = 0;
 let deferredRenderTimer = 0;
@@ -436,40 +443,49 @@ function detectSeriesAudience(book) {
     .filter(Boolean)
     .join(" ");
 
-  if (/\uCD08\uB4F1|\uCCAD\uC18C\uB144/u.test(text) || (Array.isArray(book?.filters) && book.filters.includes("elementary"))) {
-    return "elementary";
+  if (/\uACE0\uD559\uB144|\uCCAD\uC18C\uB144/u.test(text)) {
+    return seriesAudienceKeys.upperTeen;
+  }
+
+  if (/\uCD08\uB4F1/u.test(text) || (Array.isArray(book?.filters) && book.filters.includes("elementary"))) {
+    return seriesAudienceKeys.grade14;
   }
 
   if (
     /\uC601\uC544|0~|0\uc138|1\uc138|2\uc138|\uC544\uAE30|\uC601\uC720\uC544/u.test(text) ||
     (Array.isArray(book?.filters) && book.filters.includes("baby") && !/\uC720\uC544/u.test(text))
   ) {
-    return "infant";
+    return seriesAudienceKeys.age04;
   }
 
-  return "preschool";
+  return seriesAudienceKeys.age37;
 }
 
 function resolveOptionAudience(books) {
   const counts = {
-    infant: 0,
-    preschool: 0,
-    elementary: 0,
+    [seriesAudienceKeys.age04]: 0,
+    [seriesAudienceKeys.age37]: 0,
+    [seriesAudienceKeys.grade14]: 0,
+    [seriesAudienceKeys.upperTeen]: 0,
   };
 
   books.forEach((book) => {
     counts[detectSeriesAudience(book)] += 1;
   });
 
-  if (counts.elementary >= counts.preschool && counts.elementary >= counts.infant) {
-    return "elementary";
+  if (counts[seriesAudienceKeys.upperTeen] >= counts[seriesAudienceKeys.grade14] && counts[seriesAudienceKeys.upperTeen] >= counts[seriesAudienceKeys.age37] && counts[seriesAudienceKeys.upperTeen] >= counts[seriesAudienceKeys.age04]) {
+    return seriesAudienceKeys.upperTeen;
   }
 
-  if (counts.preschool >= counts.infant) {
-    return "preschool";
+  if (counts[seriesAudienceKeys.grade14] >= counts[seriesAudienceKeys.age37] && counts[seriesAudienceKeys.grade14] >= counts[seriesAudienceKeys.age04]) {
+    return seriesAudienceKeys.grade14;
   }
 
-  return "infant";
+  if (counts[seriesAudienceKeys.age37] >= counts[seriesAudienceKeys.age04]) {
+    return seriesAudienceKeys.age37;
+  }
+
+  return seriesAudienceKeys.age04;
 }
 
 function getBookCode(book) {
@@ -499,16 +515,20 @@ function buildBookCodeEntryLookup() {
 function resolveSeriesAudienceFromAge(age, fallbackBooks) {
   const text = String(age || "").trim();
 
-  if (/초등|청소년|고학년|저학년|전학년/u.test(text) || /6~10|6세~10세/u.test(text)) {
-    return "elementary";
+  if (/고학년|청소년/u.test(text)) {
+    return seriesAudienceKeys.upperTeen;
+  }
+
+  if (/초등 전학년|초등 저학년|초등 1~|초등1~|초등 2~|초등 3~|초등$/u.test(text) || /6~10|6세~10세/u.test(text)) {
+    return seriesAudienceKeys.grade14;
   }
 
   if (/영아|0~|0세|1세|2세|아장아장|토이북/u.test(text)) {
-    return "infant";
+    return seriesAudienceKeys.age04;
   }
 
-  if (/유아|3~|4~|5~|3-|4-|5-|3세|4세|5세|6세|7세/u.test(text)) {
-    return "preschool";
+  if (/유아|3~|3-|3세|4세|5세|6세|7세|4~8|5세~초등 저학년|100세 그림책/u.test(text)) {
+    return seriesAudienceKeys.age37;
   }
 
   return resolveOptionAudience(fallbackBooks);
@@ -639,7 +659,7 @@ function syncSeriesAudienceTabs() {
 function bindSeriesAudienceTabs() {
   seriesAudienceButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      activeSeriesAudience = button.dataset.seriesAudience || "elementary";
+      activeSeriesAudience = button.dataset.seriesAudience || seriesAudienceKeys.age04;
       syncSeriesAudienceTabs();
 
       const activeSeriesOption = getActiveSeriesOption();
@@ -693,7 +713,7 @@ function renderSeriesTextList() {
       cancelPendingCatalogAnimation();
       resetVisibleBooks();
       setActiveFilter("series");
-      activeSeriesAudience = option.audience || "elementary";
+      activeSeriesAudience = option.audience || seriesAudienceKeys.age04;
       activeQuery = option.token;
       activeQueryLabel = option.label;
 
