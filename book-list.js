@@ -55,6 +55,8 @@ const bookCount = document.querySelector("[data-book-count]");
 const bookState = document.querySelector("[data-book-state]");
 const bookSearch = document.querySelector("[data-book-search]");
 const bookFilters = Array.from(document.querySelectorAll("[data-book-filter]"));
+const seriesChooser = document.querySelector("[data-series-chooser]");
+const seriesList = document.querySelector("[data-series-list]");
 const recommendationGrid = document.querySelector("[data-book-recommendations]");
 const featuredSeriesGrid = document.querySelector("[data-catalog-series]");
 const heroTotal = document.querySelector("[data-book-hero-total]");
@@ -134,6 +136,53 @@ const featuredCollections = [
   },
 ];
 
+const seriesTextOptions = [
+  {
+    label: "\uC81C\uB85C\uB2C8\uBAA8",
+    query: "\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8",
+    seriesName: "\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8",
+  },
+  {
+    label: "\uD504\uB798\uB2C8",
+    query: "\uC5FD\uAE30 \uACFC\uD559\uC790 \uD504\uB798\uB2C8",
+    seriesName: "\uC5FD\uAE30 \uACFC\uD559\uC790 \uD504\uB798\uB2C8",
+  },
+  {
+    label: "\uB808\uBAAC\uCCA8\uB85C",
+    query: "\uB808\uBAAC\uCCA8\uB85C \uB3C4\uC11C\uAD00",
+    seriesName: "\uB808\uBAAC\uCCA8\uB85C \uB3C4\uC11C\uAD00",
+  },
+  {
+    label: "\uACF5\uD3EC\uC758 \uB178\uD2B8",
+    query: "\uACF5\uD3EC\uC758 \uB178\uD2B8",
+    seriesName: "\uACF5\uD3EC\uC758 \uB178\uD2B8",
+  },
+  {
+    label: "24\uBD84 \uD3B8\uC758\uC810",
+    query: "24\uBD84 \uD3B8\uC758\uC810",
+    seriesName: "24\uBD84 \uD3B8\uC758\uC810",
+  },
+  {
+    label: "\uB9E5\uBC00\uB7F0 \uC6D4\uB4DC\uBCA0\uC2A4\uD2B8",
+    query: "\uB9E5\uBC00\uB7F0 \uC6D4\uB4DC\uBCA0\uC2A4\uD2B8",
+    seriesName: "\uB9E5\uBC00\uB7F0 \uC6D4\uB4DC\uBCA0\uC2A4\uD2B8",
+  },
+  {
+    label: "\uACF5\uB8E1 \uC2DC\uB9AC\uC988",
+    query: "\uACF5\uB8E1 \uC2DC\uB9AC\uC988",
+    seriesName: "\uACF5\uB8E1 \uC2DC\uB9AC\uC988",
+  },
+  {
+    label: "\uB354 \uD2B8\uB799",
+    query: "\uB354 \uD2B8\uB799",
+    seriesName: "\uB354 \uD2B8\uB799",
+  },
+  {
+    label: "\uB098\uB294 \uC54C\uC544\uC694",
+    query: "\uB098\uB294 \uC54C\uC544\uC694!",
+    seriesName: "\uB098\uB294 \uC54C\uC544\uC694!",
+  },
+];
 const PAGE_SIZE = Number.MAX_SAFE_INTEGER;
 const EAGER_COVER_COUNT = 14;
 let activeFilter = "all";
@@ -167,6 +216,51 @@ function truncateText(value, maxLength) {
 function setActiveFilter(nextFilter) {
   activeFilter = nextFilter;
   bookFilters.forEach((item) => item.classList.toggle("active", item.dataset.bookFilter === nextFilter));
+
+  if (seriesChooser) {
+    seriesChooser.hidden = nextFilter !== "series";
+  }
+}
+
+function renderSeriesTextList() {
+  if (!seriesList) {
+    return;
+  }
+
+  const activeSeriesName = activeFilter === "series" ? activeQueryLabel : "";
+
+  seriesList.innerHTML = seriesTextOptions
+    .map((option) => {
+      const isActive = option.seriesName === activeSeriesName;
+      const className = ["series-text-button", isActive ? "is-active" : ""].filter(Boolean).join(" ");
+
+      return `<button class="${className}" type="button" data-series-option="${escapeHtml(option.seriesName)}">${escapeHtml(option.label)}</button>`;
+    })
+    .join("");
+
+  seriesList.querySelectorAll("[data-series-option]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const seriesName = button.dataset.seriesOption || "";
+      const option = seriesTextOptions.find((item) => item.seriesName === seriesName);
+
+      if (!option) {
+        return;
+      }
+
+      cancelPendingCatalogAnimation();
+      resetVisibleBooks();
+      setActiveFilter("series");
+      activeQuery = option.query.toLowerCase();
+      activeQueryLabel = option.seriesName;
+
+      if (bookSearch) {
+        bookSearch.value = option.label;
+      }
+
+      renderSeriesTextList();
+      renderBooks();
+    });
+  });
 }
 
 function resetVisibleBooks() {
@@ -184,6 +278,7 @@ function resetCatalogView() {
     bookSearch.value = "";
   }
 
+  renderSeriesTextList();
   renderBooks();
 }
 
@@ -687,9 +782,7 @@ function getSeriesSortInfo(seriesName, title) {
 }
 
 function sortFilteredEntries(entries) {
-  const activeSeriesName =
-    activeFilter === "series" &&
-    featuredCollections.find((collection) => collection.seriesName === activeQueryLabel)?.seriesName;
+  const activeSeriesName = activeFilter === "series" ? activeQueryLabel : "";
 
   if (!activeSeriesName) {
     return entries;
@@ -712,15 +805,43 @@ function renderBooks() {
     return;
   }
 
+  const waitingForSeriesSelection = activeFilter === "series" && !activeQuery;
+
+  if (waitingForSeriesSelection) {
+    cancelPendingCatalogAnimation();
+    bookGrid.innerHTML = "";
+
+    if (bookCount) {
+      bookCount.textContent = "시리즈를 먼저 골라 주세요";
+    }
+
+    if (bookState) {
+      bookState.textContent = "위의 시리즈 이름을 누르면 해당 도서 목록이 바로 열립니다.";
+    }
+
+    if (bookEmpty) {
+      bookEmpty.hidden = false;
+      bookEmpty.textContent = "시리즈를 선택하면 도서 목록이 여기에 표시됩니다.";
+    }
+
+    updateLoadMore(0);
+    renderSeriesTextList();
+    return;
+  }
+
   const filteredEntries = sortFilteredEntries(
     bookEntries.filter(([, book]) => bookMatchesFilter(book) && bookMatchesQuery(book))
   );
   const visibleEntries = filteredEntries.slice(0, visibleBookCount);
 
   renderBookGridInRows(visibleEntries, filteredEntries.length);
+  renderSeriesTextList();
 
   if (bookEmpty) {
     bookEmpty.hidden = filteredEntries.length !== 0;
+    if (!bookEmpty.hidden) {
+      bookEmpty.textContent = "조건에 맞는 도서를 찾지 못했어요. 검색어 또는 시리즈를 다시 골라 보세요.";
+    }
   }
 }
 
@@ -806,6 +927,7 @@ function renderFeaturedCollections() {
       if (matchedCollection?.seriesName) {
         activeQuery = matchedCollection.seriesName.toLowerCase();
         activeQueryLabel = matchedCollection.seriesName;
+        renderSeriesTextList();
       }
 
       if (bookCount) {
@@ -859,7 +981,19 @@ bookFilters.forEach((button) => {
   button.addEventListener("click", () => {
     cancelPendingCatalogAnimation();
     resetVisibleBooks();
-    setActiveFilter(button.dataset.bookFilter || "all");
+    const nextFilter = button.dataset.bookFilter || "all";
+    setActiveFilter(nextFilter);
+
+    if (nextFilter === "series") {
+      activeQuery = "";
+      activeQueryLabel = "";
+
+      if (bookSearch) {
+        bookSearch.value = "";
+      }
+    }
+
+    renderSeriesTextList();
     renderBooks();
   });
 });
@@ -876,6 +1010,7 @@ if (bookSearch) {
     activeQueryLabel = event.target.value.trim();
     activeQuery = activeQueryLabel.toLowerCase();
     resetVisibleBooks();
+    renderSeriesTextList();
     renderBooks();
   });
 }
@@ -926,5 +1061,7 @@ if (heroAges) {
 }
 
 renderFeaturedCollections();
+renderSeriesTextList();
 renderBooks();
 renderRecommendations();
+

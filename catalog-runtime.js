@@ -143,9 +143,35 @@
     "8809539740041",
   ]);
 
+  function sanitizeOfficialTitle(value) {
+    return String(value || "")
+      .replace(/^\(\uCD9C\uC2DC\uC608\uC815\)\s*/u, "")
+      .trim();
+  }
+
+  function isExcludedOfficialTitle(value) {
+    const title = sanitizeOfficialTitle(value);
+
+    if (!title) {
+      return false;
+    }
+
+    return title.startsWith("[\uC138\uD2B8]") || /(?:^|\s)\uC138\uD2B8(?:$|\s|\d|\()/u.test(title);
+  }
+
   function getSeriesOverride(title, bookCode) {
+    const safeTitle = sanitizeOfficialTitle(title);
+
     if (macmillanWorldBestCodes.has(String(bookCode || ""))) {
-      return "맥밀런 월드베스트";
+      return "\uB9E5\uBC00\uB7F0 \uC6D4\uB4DC\uBCA0\uC2A4\uD2B8";
+    }
+
+    if (/^\uC5FD\uAE30\s?\uACFC\uD559\uC790\s\uD504\uB798\uB2C8/u.test(safeTitle)) {
+      return "\uC5FD\uAE30 \uACFC\uD559\uC790 \uD504\uB798\uB2C8";
+    }
+
+    if (safeTitle === "\uC138\uC0C1\uC744 \uBC14\uAFB8\uB294 \uD558\uB098\uC758 \uBAA9\uC18C\uB9AC") {
+      return "\uB354 \uD2B8\uB799";
     }
 
     const overrides = {
@@ -161,7 +187,7 @@
       "준비, 영차! 공룡 농장": "공룡 시리즈",
     };
 
-    return overrides[title] || "";
+    return overrides[safeTitle] || overrides[title] || "";
   }
 
   function buildFallbackHighlights(book) {
@@ -350,9 +376,10 @@
   }
 
   function normalizeOfficialEntry(entry) {
+    const title = sanitizeOfficialTitle(entry.title);
     const age = normalizeAgeText(entry.age);
     const category = normalizeCategoryText(entry.category);
-    const seriesOverride = getSeriesOverride(entry.title, entry.bookCode);
+    const seriesOverride = getSeriesOverride(title, entry.bookCode);
     const series = entry.series || seriesOverride;
     const filters = Array.isArray(entry.filters) ? entry.filters.filter(Boolean) : [];
 
@@ -362,6 +389,7 @@
 
     return applyOfficialOverrides({
       ...entry,
+      title,
       age,
       series,
       category,
@@ -405,9 +433,14 @@
       }
 
       const bookCode = String(book.bookCode || "");
-      const normalizedTitle = normalizeTitle(book.title);
+      const safeTitle = sanitizeOfficialTitle(book.title);
+      const normalizedTitle = normalizeTitle(safeTitle);
 
       if (bookCode && excludedOfficialBookCodes.has(bookCode)) {
+        return;
+      }
+
+      if (isExcludedOfficialTitle(book.title)) {
         return;
       }
 
@@ -441,3 +474,4 @@
   window.normalizeSafariTitle = normalizeTitle;
   window.extractSafariBookCode = extractBookCode;
 })();
+
