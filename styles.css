@@ -2045,6 +2045,38 @@ input {
   line-height: 1.6;
 }
 
+.series-audience-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.series-audience-tab {
+  appearance: none;
+  border: 1px solid rgba(214, 198, 183, 0.92);
+  background: rgba(255, 255, 255, 0.82);
+  color: rgba(96, 78, 67, 0.92);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.series-audience-tab:hover,
+.series-audience-tab:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(184, 142, 119, 0.9);
+}
+
+.series-audience-tab.is-active {
+  background: rgba(195, 164, 142, 0.18);
+  border-color: rgba(184, 142, 119, 0.9);
+  color: var(--accent-strong);
+}
+
 .series-text-list {
   display: flex;
   flex-wrap: wrap;

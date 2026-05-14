@@ -57,6 +57,7 @@ const bookSearch = document.querySelector("[data-book-search]");
 const bookFilters = Array.from(document.querySelectorAll("[data-book-filter]"));
 const seriesChooser = document.querySelector("[data-series-chooser]");
 const seriesList = document.querySelector("[data-series-list]");
+const seriesAudienceButtons = Array.from(document.querySelectorAll("[data-series-audience]"));
 const recommendationGrid = document.querySelector("[data-book-recommendations]");
 const featuredSeriesGrid = document.querySelector("[data-catalog-series]");
 const heroTotal = document.querySelector("[data-book-hero-total]");
@@ -269,12 +270,27 @@ const officialSeriesAliases = {
     titleIncludes: ["\uC288\uD37C\uD788\uC5B4\uB85C\uC988"],
   },
 };
+const mergedOfficialSeriesLabels = new Set([
+  "24분 편의점",
+  "경고! 절대 열면 안 되는 공포의 노트",
+  "나는 알아요",
+  "맥밀런 월드베스트 한글",
+  "엽기 과학자 프래니",
+  "제로니모의 환상 모험",
+  "제로니모의 환상 모험 PLUS",
+  "제로니모의 환상 모험 그래픽노블",
+  "제로니모의 환상 모험 만화",
+  "제로니모의 환상 모험 클래식",
+  "제로니모의 퍼니월드",
+  "슈퍼히어로즈",
+]);
 const PAGE_SIZE = Number.MAX_SAFE_INTEGER;
 const EAGER_COVER_COUNT = 14;
 const seriesTextOptions = buildSeriesTextOptions();
 let activeFilter = "all";
 let activeQuery = "";
 let activeQueryLabel = "";
+let activeSeriesAudience = "elementary";
 let visibleBookCount = PAGE_SIZE;
 let renderSequence = 0;
 let deferredRenderTimer = 0;
@@ -319,6 +335,47 @@ function matchesSeriesOption(book, option) {
   return false;
 }
 
+function detectSeriesAudience(book) {
+  const text = [book?.age, book?.category, book?.title, book?.summary]
+    .filter(Boolean)
+    .join(" ");
+
+  if (/\uCD08\uB4F1|\uCCAD\uC18C\uB144/u.test(text) || (Array.isArray(book?.filters) && book.filters.includes("elementary"))) {
+    return "elementary";
+  }
+
+  if (
+    /\uC601\uC544|0~|0\uc138|1\uc138|2\uc138|\uC544\uAE30|\uC601\uC720\uC544/u.test(text) ||
+    (Array.isArray(book?.filters) && book.filters.includes("baby") && !/\uC720\uC544/u.test(text))
+  ) {
+    return "infant";
+  }
+
+  return "preschool";
+}
+
+function resolveOptionAudience(books) {
+  const counts = {
+    infant: 0,
+    preschool: 0,
+    elementary: 0,
+  };
+
+  books.forEach((book) => {
+    counts[detectSeriesAudience(book)] += 1;
+  });
+
+  if (counts.elementary >= counts.preschool && counts.elementary >= counts.infant) {
+    return "elementary";
+  }
+
+  if (counts.preschool >= counts.infant) {
+    return "preschool";
+  }
+
+  return "infant";
+}
+
 function buildSeriesTextOptions() {
   const catalogBooks = Object.values(mergedCatalog);
   const options = [];
@@ -326,7 +383,8 @@ function buildSeriesTextOptions() {
   const coveredLabels = new Set();
 
   presetSeriesOptionSeeds.forEach((seed) => {
-    const totalCount = catalogBooks.filter((book) => matchesSeriesOption(book, seed)).length;
+    const matchedBooks = catalogBooks.filter((book) => matchesSeriesOption(book, seed));
+    const totalCount = matchedBooks.length;
 
     if (!totalCount) {
       return;
@@ -338,11 +396,12 @@ function buildSeriesTextOptions() {
       ...seed,
       token: buildSeriesToken(seed.key),
       totalCount,
+      audience: resolveOptionAudience(matchedBooks),
     });
   });
 
   officialSeriesLabels.forEach((label, index) => {
-    if (coveredLabels.has(label)) {
+    if (coveredLabels.has(label) || mergedOfficialSeriesLabels.has(label)) {
       return;
     }
 
@@ -353,7 +412,8 @@ function buildSeriesTextOptions() {
       seriesNames: alias.seriesNames || [label],
       titleIncludes: alias.titleIncludes || [label],
     };
-    const totalCount = catalogBooks.filter((book) => matchesSeriesOption(book, seed)).length;
+    const matchedBooks = catalogBooks.filter((book) => matchesSeriesOption(book, seed));
+    const totalCount = matchedBooks.length;
 
     if (!totalCount) {
       return;
@@ -365,6 +425,7 @@ function buildSeriesTextOptions() {
       ...seed,
       token: buildSeriesToken(seed.key),
       totalCount,
+      audience: resolveOptionAudience(matchedBooks),
     });
   });
 
@@ -379,12 +440,15 @@ function buildSeriesTextOptions() {
     .sort((a, b) => a.localeCompare(b, "ko"));
 
   dynamicSeriesNames.forEach((name, index) => {
+    const matchedBooks = catalogBooks.filter((book) => String(book?.series || "").trim() === name);
+
     options.push({
       key: `dynamic-${index}`,
       label: name,
       seriesNames: [name],
       token: buildSeriesToken(`dynamic-${index}`),
-      totalCount: catalogBooks.filter((book) => String(book?.series || "").trim() === name).length,
+      totalCount: matchedBooks.length,
+      audience: resolveOptionAudience(matchedBooks),
     });
   });
 
@@ -397,6 +461,30 @@ function getActiveSeriesOption() {
   }
 
   return seriesTextOptions.find((option) => option.token === activeQuery) || null;
+}
+
+function syncSeriesAudienceTabs() {
+  seriesAudienceButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.seriesAudience === activeSeriesAudience);
+  });
+}
+
+function bindSeriesAudienceTabs() {
+  seriesAudienceButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeSeriesAudience = button.dataset.seriesAudience || "elementary";
+      syncSeriesAudienceTabs();
+
+      const activeSeriesOption = getActiveSeriesOption();
+      if (activeSeriesOption && activeSeriesOption.audience !== activeSeriesAudience) {
+        activeQuery = "";
+        activeQueryLabel = "";
+      }
+
+      renderSeriesTextList();
+      renderBooks();
+    });
+  });
 }
 
 function setActiveFilter(nextFilter) {
@@ -413,9 +501,11 @@ function renderSeriesTextList() {
     return;
   }
 
+  syncSeriesAudienceTabs();
   const activeSeriesOption = getActiveSeriesOption();
+  const visibleSeriesOptions = seriesTextOptions.filter((option) => option.audience === activeSeriesAudience);
 
-  seriesList.innerHTML = seriesTextOptions
+  seriesList.innerHTML = visibleSeriesOptions
     .map((option) => {
       const isActive = activeSeriesOption?.key === option.key;
       const className = ["series-text-button", isActive ? "is-active" : ""].filter(Boolean).join(" ");
@@ -436,6 +526,7 @@ function renderSeriesTextList() {
       cancelPendingCatalogAnimation();
       resetVisibleBooks();
       setActiveFilter("series");
+      activeSeriesAudience = option.audience || "elementary";
       activeQuery = option.token;
       activeQueryLabel = option.label;
 
@@ -1285,6 +1376,7 @@ function renderFeaturedCollections() {
         );
 
         if (matchedSeriesOption) {
+          activeSeriesAudience = matchedSeriesOption.audience || activeSeriesAudience;
           activeQuery = matchedSeriesOption.token;
           activeQueryLabel = matchedSeriesOption.label;
         } else {
@@ -1424,6 +1516,7 @@ if (heroAges) {
   }
 }
 
+bindSeriesAudienceTabs();
 renderFeaturedCollections();
 renderSeriesTextList();
 renderBooks();
