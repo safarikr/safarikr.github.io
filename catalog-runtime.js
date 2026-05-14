@@ -200,6 +200,10 @@
     const source = String(book?.cover || "").trim();
     const officialCoverFallback = getOfficialCoverFallback(book);
 
+    if (source) {
+      return resolveRemoteAssetSource(source);
+    }
+
     if (officialCoverFallback) {
       return resolveRemoteAssetSource(officialCoverFallback);
     }
