@@ -134,7 +134,7 @@ const featuredCollections = [
   },
 ];
 
-const PAGE_SIZE = 98;
+const PAGE_SIZE = Number.MAX_SAFE_INTEGER;
 let activeFilter = "all";
 let activeQuery = "";
 let activeQueryLabel = "";
@@ -679,6 +679,15 @@ function renderBooks() {
   }
 }
 
+function updateLoadMore() {
+  if (!loadMoreShell) {
+    return;
+  }
+
+  loadMoreShell.hidden = true;
+  loadMoreShell.style.display = "none";
+}
+
 function buildCollectionCardMarkup(collection) {
   const books = collection.ids
     .map((id) => [id, curatedCatalog[id] || mergedCatalog[id]])
@@ -832,6 +841,11 @@ if (loadMoreButton) {
     visibleBookCount += PAGE_SIZE;
     renderBooks();
   });
+}
+
+if (loadMoreShell) {
+  loadMoreShell.hidden = true;
+  loadMoreShell.style.display = "none";
 }
 
 if (heroTotal) {

@@ -29,6 +29,10 @@
     return match ? match[1] : "";
   }
 
+  const localCoverOverrides = {
+    "1500400502010": "./assets/covers/1500400502010.jpg",
+  };
+
   function getOfficialCatalog() {
     return window.safariOfficialCatalog || {};
   }
@@ -198,7 +202,12 @@
 
   function resolveCoverSource(book) {
     const source = String(book?.cover || "").trim();
+    const bookCode = String(book?.bookCode || extractBookCode(book?.officialUrl) || "").trim();
     const officialCoverFallback = getOfficialCoverFallback(book);
+
+    if (bookCode && localCoverOverrides[bookCode]) {
+      return localCoverOverrides[bookCode];
+    }
 
     if (source) {
       return resolveRemoteAssetSource(source);
