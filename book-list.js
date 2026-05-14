@@ -135,6 +135,7 @@ const featuredCollections = [
 ];
 
 const PAGE_SIZE = Number.MAX_SAFE_INTEGER;
+const EAGER_COVER_COUNT = 14;
 let activeFilter = "all";
 let activeQuery = "";
 let activeQueryLabel = "";
@@ -342,7 +343,32 @@ function disconnectRowObserver() {
 function scheduleCatalogCard(callback) {
   window.setTimeout(() => {
     window.requestAnimationFrame(callback);
-  }, 46);
+  }, 24);
+}
+
+function applyCatalogImagePriority(card, index) {
+  const image = card?.querySelector(".catalog-cover-image");
+
+  if (!image) {
+    return;
+  }
+
+  image.decoding = "async";
+
+  if (index < 4) {
+    image.loading = "eager";
+    image.fetchPriority = "high";
+    return;
+  }
+
+  if (index < EAGER_COVER_COUNT) {
+    image.loading = "eager";
+    image.fetchPriority = "auto";
+    return;
+  }
+
+  image.loading = "lazy";
+  image.fetchPriority = "low";
 }
 
 function renderBookGridInRows(entries, filteredCount) {
@@ -423,6 +449,24 @@ function renderBookGridInRows(entries, filteredCount) {
       return;
     }
 
+    if (startIndex === 0) {
+      const firstRowMarkup = rowEntries
+        .map(([id, book]) => buildBookCardMarkup(id, book, "is-stream-enter"))
+        .join("");
+
+      bookGrid.insertAdjacentHTML("beforeend", firstRowMarkup);
+
+      Array.from(bookGrid.children)
+        .slice(-rowEntries.length)
+        .forEach((card, rowIndex) => applyCatalogImagePriority(card, rowIndex));
+
+      startIndex += rowEntries.length;
+      renderedCount = startIndex;
+      syncProgress();
+      armNextRowObserver();
+      return;
+    }
+
     let rowOffset = 0;
 
     const streamCard = () => {
@@ -442,6 +486,7 @@ function renderBookGridInRows(entries, filteredCount) {
 
       const [id, book] = currentEntry;
       bookGrid.insertAdjacentHTML("beforeend", buildBookCardMarkup(id, book, "is-stream-enter"));
+      applyCatalogImagePriority(bookGrid.lastElementChild, startIndex + rowOffset);
       rowOffset += 1;
       scheduleCatalogCard(streamCard);
     };
