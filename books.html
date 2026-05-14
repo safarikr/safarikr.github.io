@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>사파리 출판사 | 도서 목록</title>
+    <meta
+      name="description"
+      content="사파리 출판사의 실제 도서를 표지와 함께 둘러보고 상세 페이지로 이동하는 목록 시안입니다."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="books-page">
+    <div class="site-shell">
+      <header class="glass-header">
+        <div class="header-row">
+          <a class="brand" href="./index.html" aria-label="사파리 출판사 홈">
+            <div class="brand-mark">S</div>
+            <div class="brand-copy">
+              <strong>사파리 출판사</strong>
+              <span>Book Catalog Preview</span>
+            </div>
+          </a>
+          <nav class="nav-links" aria-label="주요 메뉴">
+            <a href="./index.html">브랜드 홈</a>
+            <a href="./books.html" class="is-current">도서 목록</a>
+            <a href="./audio.html">음원 체험</a>
+            <a href="./events.html">이벤트</a>
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-hero">
+          <div class="container page-hero-shell reveal">
+            <div class="page-hero-copy">
+              <div class="eyebrow">Safari Books</div>
+              <h1>읽고 싶은 사파리 도서를<br /><span>더 빠르게 골라보세요</span></h1>
+              <p>
+                시리즈와 연령대로 먼저 좁혀 보고, 마음에 드는 책은 상세 페이지에서 리뷰와 구매 링크까지
+                한 번에 확인할 수 있게 정리했습니다.
+              </p>
+              <div class="hero-actions">
+                <a class="button" href="#catalog-section">전체 목록 보기 <span class="arrow">→</span></a>
+                <a class="button-secondary" href="#series-picks">시리즈로 보기 <span class="arrow">→</span></a>
+              </div>
+            </div>
+            <aside class="page-hero-panel catalog-hero-panel">
+              <div class="catalog-stat-grid">
+                <article class="catalog-stat-card">
+                  <span>전체 도서</span>
+                  <strong data-book-hero-total>34권</strong>
+                  <p>실제 사파리 도서 기준</p>
+                </article>
+                <article class="catalog-stat-card">
+                  <span>대표 시리즈</span>
+                  <strong data-book-hero-series>6개</strong>
+                  <p>시리즈 중심 탐색 가능</p>
+                </article>
+                <article class="catalog-stat-card">
+                  <span>탐색 방식</span>
+                  <strong data-book-hero-ages>2축</strong>
+                  <p>시리즈와 키워드 중심</p>
+                </article>
+              </div>
+              <div class="catalog-hero-note">
+                <strong>이렇게 보면 더 빠르게 찾을 수 있어요</strong>
+                <p>시리즈를 먼저 고른 뒤 키워드 검색을 더하면, 도서 수가 많아도 원하는 책을 훨씬 빠르게 좁혀 볼 수 있습니다.</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="container">
+            <div class="section-shell reveal catalog-series-shell" id="series-picks">
+              <div class="section-heading section-heading-inline">
+                <div>
+                  <div class="eyebrow">Series Pick</div>
+                  <h2>많이 찾는 시리즈부터 보기</h2>
+                </div>
+                <p>도서 수가 많아도 시리즈 단위로 먼저 보면 전체 흐름이 훨씬 빠르게 잡힙니다.</p>
+              </div>
+              <div class="collection-grid" data-catalog-series></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="catalog-section">
+          <div class="container">
+            <div class="page-block reveal">
+              <div class="toolbar toolbar-rich">
+                <div class="toolbar-meta">
+                  <div class="eyebrow">Catalog Filter</div>
+                  <p class="toolbar-copy">시리즈와 키워드 중심으로 빠르게 좁혀볼 수 있게 구성했습니다.</p>
+                </div>
+                <div class="toolbar-actions">
+                  <div class="pill-group" role="tablist" aria-label="도서 분류">
+                    <button class="pill active" type="button" data-book-filter="all">전체</button>
+                    <button class="pill" type="button" data-book-filter="baby">영유아</button>
+                    <button class="pill" type="button" data-book-filter="elementary">초등</button>
+                    <button class="pill" type="button" data-book-filter="series">시리즈</button>
+                  </div>
+                  <label class="search-shell" aria-label="도서 검색">
+                    <span>⌕</span>
+                    <input
+                      type="text"
+                      placeholder="책 제목, 시리즈, 키워드로 찾아보세요"
+                      data-book-search
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div class="catalog-summary">
+                <div class="catalog-summary-copy">
+                  <strong data-book-count>도서를 불러오는 중이에요</strong>
+                  <span data-book-state>카드를 누르면 책 표지와 상세 정보, 리뷰 모음, 네이버스토어 연결이 보입니다.</span>
+                </div>
+                <div class="catalog-summary-actions">
+                  <button class="compact-ghost-button" type="button" data-book-reset>전체 목록 보기</button>
+                </div>
+              </div>
+
+              <div class="catalog-grid catalog-grid-rich" data-book-grid></div>
+              <div class="catalog-load-more-shell" data-book-load-more-shell hidden>
+                <button class="catalog-load-more" type="button" data-book-load-more>도서 더 보기</button>
+              </div>
+              <div class="catalog-empty" data-book-empty hidden>조건에 맞는 도서를 찾지 못했어요. 검색어나 필터를 다시 바꿔 보세요.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="container two-column">
+            <div class="mini-section reveal">
+              <div class="eyebrow">Browsing Tip</div>
+              <h3>이렇게 고르면 더 빠르게 보여요</h3>
+              <p>시리즈를 먼저 고른 뒤, 책 제목이나 주제 키워드를 더해보면 원하는 책을 훨씬 빠르게 찾을 수 있습니다.</p>
+              <ul class="note-list list-reset tip-list">
+                <li>처음엔 공룡 시리즈, 24분 편의점, 공포의 노트처럼 대표 시리즈부터 둘러보세요.</li>
+                <li>그다음 책 제목이나 관심 주제를 검색하면 범위를 빠르게 좁힐 수 있습니다.</li>
+                <li>상세 페이지에서는 리뷰 사진과 스마트스토어 연결까지 한 번에 이어집니다.</li>
+              </ul>
+            </div>
+            <div class="mini-section reveal">
+              <div class="eyebrow">Quick Pick</div>
+              <h3>지금 같이 많이 보는 도서</h3>
+              <div class="compact-recommend-grid" data-book-recommendations></div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div class="container footer-shell">
+          <div class="footer-copy">
+            <strong>도서 목록 시안</strong>
+            <span>표지에서 상세 페이지까지 부드럽게 이어지는 사파리 도서 브라우징 화면입니다.</span>
+          </div>
+          <a class="pill-link" href="./index.html">메인 보기</a>
+        </div>
+      </footer>
+
+      <nav class="quick-dock" aria-label="빠른 이동">
+        <a class="dock-link" href="./index.html"><span></span>홈</a>
+        <a class="dock-link is-current" href="./books.html"><span></span>도서</a>
+        <a class="dock-link" href="./audio.html"><span></span>음원</a>
+        <a class="dock-link" href="./events.html"><span></span>이벤트</a>
+      </nav>
+    </div>
+    <script src="./official-catalog.js"></script>
+    <script src="./book-data.js"></script>
+    <script src="./catalog-runtime.js"></script>
+    <script src="./book-list.js"></script>
+    <script src="./script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>사파리 출판사 | 도서 상세</title>
+    <meta
+      name="description"
+      content="사파리 출판사 도서의 표지, 소개, 리뷰 모음, 네이버 스마트스토어 연결을 함께 보여 주는 상세 페이지 시안입니다."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="glass-header">
+        <div class="header-row">
+          <a class="brand" href="./index.html" aria-label="사파리 출판사 홈">
+            <div class="brand-mark">S</div>
+            <div class="brand-copy">
+              <strong>사파리 출판사</strong>
+              <span>Book Detail Preview</span>
+            </div>
+          </a>
+          <nav class="nav-links" aria-label="주요 메뉴">
+            <a href="./index.html">브랜드 홈</a>
+            <a href="./books.html" class="is-current">도서 목록</a>
+            <a href="./audio.html">음원 체험</a>
+            <a href="./events.html">이벤트</a>
+          </nav>
+        </div>
+      </header>
+
+      <main class="book-detail-main">
+        <div class="container" data-book-detail-root></div>
+      </main>
+
+      <footer class="footer">
+        <div class="container footer-shell">
+          <div class="footer-copy">
+            <strong>도서 상세 시안</strong>
+            <span>책 소개와 리뷰 모음, 구매 연결을 한 화면에 정리한 상세 페이지입니다.</span>
+          </div>
+          <a class="pill-link" href="./books.html">목록으로 돌아가기</a>
+        </div>
+      </footer>
+
+      <nav class="quick-dock" aria-label="빠른 이동">
+        <a class="dock-link" href="./index.html"><span></span>홈</a>
+        <a class="dock-link is-current" href="./books.html"><span></span>도서</a>
+        <a class="dock-link" href="./audio.html"><span></span>음원</a>
+        <a class="dock-link" href="./events.html"><span></span>이벤트</a>
+      </nav>
+    </div>
+    <script src="./official-catalog.js"></script>
+    <script src="./book-data.js"></script>
+    <script src="./catalog-runtime.js"></script>
+    <script src="./blog-review-index.js"></script>
+    <script src="./book-detail.js"></script>
+    <script src="./script.js"></script>
+  </body>
+</html>

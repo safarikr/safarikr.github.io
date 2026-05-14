@@ -1,0 +1,871 @@
+const curatedBookIds = [
+  "spring-yahoo",
+  "macmillan-red-boots",
+  "macmillan-brush-teeth",
+  "macmillan-snow",
+  "dino-baby",
+  "dino-bungbung",
+  "dino-ambulance",
+  "hundred-bus",
+  "hundred-rocket",
+  "24store-1",
+  "24store-2",
+  "24store-3",
+  "horror-note-1",
+  "horror-note-2",
+  "horror-note-3",
+  "world-culture",
+  "karel-sound",
+  "geronimo-1",
+  "geronimo-9",
+  "geronimo-11",
+  "geronimo-22",
+  "geronimo-28",
+  "franny-2",
+  "lemoncello",
+  "one-voice",
+];
+
+const recommendationIds = ["24store-1", "horror-note-1", "geronimo-22", "hundred-bus", "macmillan-red-boots", "dino-ambulance"];
+const curatedCatalog = window.bookCatalog || {};
+const mergedCatalog = window.getSafariMergedCatalog ? window.getSafariMergedCatalog() : curatedCatalog;
+const sortOrderMap = new Map(curatedBookIds.map((id, index) => [id, index]));
+
+const bookEntries = Object.entries(mergedCatalog).sort(([idA, bookA], [idB, bookB]) => {
+  const curatedOrderA = sortOrderMap.has(idA) ? sortOrderMap.get(idA) : Number.MAX_SAFE_INTEGER;
+  const curatedOrderB = sortOrderMap.has(idB) ? sortOrderMap.get(idB) : Number.MAX_SAFE_INTEGER;
+
+  if (curatedOrderA !== curatedOrderB) {
+    return curatedOrderA - curatedOrderB;
+  }
+
+  const importOrderA = Number.isFinite(bookA?.importOrder) ? bookA.importOrder : Number.MAX_SAFE_INTEGER;
+  const importOrderB = Number.isFinite(bookB?.importOrder) ? bookB.importOrder : Number.MAX_SAFE_INTEGER;
+
+  if (importOrderA !== importOrderB) {
+    return importOrderA - importOrderB;
+  }
+
+  return String(bookA?.title || idA).localeCompare(String(bookB?.title || idB), "ko");
+});
+
+const bookGrid = document.querySelector("[data-book-grid]");
+const bookEmpty = document.querySelector("[data-book-empty]");
+const bookCount = document.querySelector("[data-book-count]");
+const bookState = document.querySelector("[data-book-state]");
+const bookSearch = document.querySelector("[data-book-search]");
+const bookFilters = Array.from(document.querySelectorAll("[data-book-filter]"));
+const recommendationGrid = document.querySelector("[data-book-recommendations]");
+const featuredSeriesGrid = document.querySelector("[data-catalog-series]");
+const heroTotal = document.querySelector("[data-book-hero-total]");
+const heroSeries = document.querySelector("[data-book-hero-series]");
+const heroAges = document.querySelector("[data-book-hero-ages]");
+const loadMoreShell = document.querySelector("[data-book-load-more-shell]");
+const loadMoreButton = document.querySelector("[data-book-load-more]");
+const resetCatalogButton = document.querySelector("[data-book-reset]");
+let rowSentinel = null;
+let catalogRowObserver = null;
+
+const filterLabels = {
+  all: "전체",
+  baby: "영유아",
+  elementary: "초등",
+  series: "시리즈",
+};
+
+const featuredCollections = [
+  {
+    title: "24분 편의점",
+    description: "익숙한 공간과 빠른 사건 전개가 이어져 초등 저학년이 즐겁게 읽기 좋은 시리즈입니다.",
+    query: "24분 편의점",
+    seriesName: "24분 편의점",
+    totalCount: 3,
+    ids: ["24store-1", "24store-2", "24store-3"],
+    tone: "peach",
+  },
+  {
+    title: "맥밀런 월드베스트",
+    description: "짧은 문장과 따뜻한 장면이 살아 있어 영유아 아이가 함께 보기 좋은 그림책 시리즈입니다.",
+    query: "맥밀런 월드베스트",
+    seriesName: "맥밀런 월드베스트",
+    totalCount: 40,
+    ids: ["spring-yahoo", "macmillan-red-boots", "macmillan-brush-teeth", "macmillan-snow"],
+    tone: "mint",
+  },
+  {
+    title: "공포의 노트",
+    description: "긴장감과 유머가 균형 있게 섞여 있어 초등 독자가 몰입해서 읽기 좋은 시리즈입니다.",
+    query: "공포의 노트",
+    seriesName: "공포의 노트",
+    totalCount: 8,
+    ids: ["horror-note-1", "horror-note-2", "horror-note-3"],
+    tone: "blue",
+  },
+  {
+    title: "100층 시리즈",
+    description: "층을 따라 올라가며 보는 구조라 읽어 주기와 혼자 읽기 모두에 잘 어울립니다.",
+    query: "100층",
+    ids: ["hundred-bus", "hundred-rocket"],
+    tone: "gold",
+  },
+  {
+    title: "공룡 시리즈",
+    description: "공룡과 탈것, 모험이 또렷하게 살아 있어 반복해서 펼쳐 보기 좋은 공룡 시리즈 모음입니다.",
+    query: "공룡",
+    seriesName: "공룡 시리즈",
+    totalCount: 5,
+    ids: [
+      "dino-ambulance",
+      "official-1500404000075",
+      "official-1500404000122",
+      "official-1500404000091",
+      "official-1500404000121",
+    ],
+    tone: "rose",
+  },
+  {
+    title: "제로니모의 환상 모험",
+    description: "모험과 판타지가 선명해서 초등 독자가 긴 호흡의 읽기로 넘어가기 좋은 대표 시리즈입니다.",
+    query: "제로니모의 환상 모험",
+    seriesName: "제로니모의 환상 모험",
+    totalCount: 30,
+    ids: ["geronimo-1", "geronimo-9", "geronimo-22", "geronimo-28"],
+    tone: "blue",
+  },
+];
+
+const PAGE_SIZE = 98;
+let activeFilter = "all";
+let activeQuery = "";
+let activeQueryLabel = "";
+let visibleBookCount = PAGE_SIZE;
+let renderSequence = 0;
+let deferredRenderTimer = 0;
+let scrollAnimationFrame = 0;
+let scrollSettleTimer = 0;
+let scrollWaitToken = 0;
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function truncateText(value, maxLength) {
+  const text = String(value || "").trim();
+
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength).trim()}…`;
+}
+
+function setActiveFilter(nextFilter) {
+  activeFilter = nextFilter;
+  bookFilters.forEach((item) => item.classList.toggle("active", item.dataset.bookFilter === nextFilter));
+}
+
+function resetVisibleBooks() {
+  visibleBookCount = PAGE_SIZE;
+}
+
+function resetCatalogView() {
+  cancelPendingCatalogAnimation();
+  activeQuery = "";
+  activeQueryLabel = "";
+  resetVisibleBooks();
+  setActiveFilter("all");
+
+  if (bookSearch) {
+    bookSearch.value = "";
+  }
+
+  renderBooks();
+}
+
+function bookMatchesFilter(book) {
+  if (activeFilter === "all") {
+    return true;
+  }
+
+  return Array.isArray(book.filters) && book.filters.includes(activeFilter);
+}
+
+function bookMatchesQuery(book) {
+  if (!activeQuery) {
+    return true;
+  }
+
+  const haystack = [
+    book.title,
+    book.subtitle,
+    book.series,
+    book.age,
+    book.category,
+    book.summary,
+    book.description,
+    ...(book.highlights || []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(activeQuery);
+}
+
+function buildTagMarkup(book) {
+  const tags = [book.series, ...(book.highlights || []).slice(0, 2)];
+
+  return tags
+    .filter(Boolean)
+    .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
+    .join("");
+}
+
+function buildCardTopline(book) {
+  const parts = [];
+
+  if (book.age) {
+    parts.push(`<span class="catalog-kicker">${escapeHtml(book.age)}</span>`);
+  }
+
+  if (book.series) {
+    parts.push(`<span class="catalog-series-name">${escapeHtml(book.series)}</span>`);
+  }
+
+  if (!parts.length) {
+    return "";
+  }
+
+  return `<div class="catalog-topline">${parts.join("")}</div>`;
+}
+
+function buildBookCardMarkup(id, book, extraClass = "") {
+  const subtitle = book.subtitle ? `<span class="catalog-subtitle">${escapeHtml(book.subtitle)}</span>` : "";
+  const summary = truncateText(book.summary, 56);
+  const category = book.category || "사파리 도서";
+  const linkLabel = `${book.title} 상세 보기`;
+  const cardClassName = ["catalog-card", "catalog-link", "is-visible", extraClass].filter(Boolean).join(" ");
+
+  return `
+    <a class="${cardClassName}" href="./book-detail.html?book=${encodeURIComponent(id)}" data-tilt aria-label="${escapeHtml(linkLabel)}">
+      <div class="catalog-cover-frame">
+        <img class="catalog-cover-image" src="${escapeHtml(book.cover)}" alt="${escapeHtml(book.title)} 표지" loading="lazy" />
+      </div>
+      <div class="catalog-copy">
+        ${buildCardTopline(book)}
+        <strong>${escapeHtml(book.title)}</strong>
+        ${subtitle}
+        <p>${escapeHtml(summary)}</p>
+        <div class="card-tags">${buildTagMarkup(book)}</div>
+        <div class="catalog-card-footer">
+          <span class="catalog-meta-chip">${escapeHtml(category)}</span>
+          <span class="catalog-cta">표지와 리뷰 보기</span>
+        </div>
+      </div>
+    </a>
+  `;
+}
+
+function getStateLabel(filteredCount, visibleCount) {
+  const filterLabel = filterLabels[activeFilter] || "전체";
+  const queryLabel = activeQueryLabel ? `검색어 “${activeQueryLabel}”` : "검색어 없음";
+  const visibleLabel = filteredCount > visibleCount ? `${visibleCount}권 표시 중` : `${filteredCount}권 표시 중`;
+
+  return `전체 ${bookEntries.length}권 · ${filterLabel} · ${queryLabel} · ${visibleLabel}`;
+}
+
+function updateLoadMore(filteredCount) {
+  if (!loadMoreShell || !loadMoreButton) {
+    return;
+  }
+
+  const hasMore = filteredCount > visibleBookCount;
+  loadMoreShell.hidden = !hasMore;
+
+  if (!hasMore) {
+    return;
+  }
+
+  const remainingCount = filteredCount - visibleBookCount;
+  const nextCount = Math.min(PAGE_SIZE, remainingCount);
+  loadMoreButton.textContent = `${nextCount}권 더 보기`;
+}
+
+function getCatalogColumnCount() {
+  if (window.innerWidth <= 720) {
+    return 2;
+  }
+
+  if (window.innerWidth <= 920) {
+    return 3;
+  }
+
+  if (window.innerWidth <= 1280) {
+    return 6;
+  }
+
+  return 7;
+}
+
+function ensureRowSentinel() {
+  if (!bookGrid || !bookGrid.parentElement) {
+    return null;
+  }
+
+  if (rowSentinel?.isConnected) {
+    return rowSentinel;
+  }
+
+  rowSentinel = document.createElement("div");
+  rowSentinel.className = "catalog-row-sentinel";
+  rowSentinel.setAttribute("data-catalog-row-sentinel", "");
+  rowSentinel.hidden = true;
+
+  const parent = bookGrid.parentElement;
+  const referenceNode = loadMoreShell || bookEmpty || bookGrid.nextSibling;
+  parent.insertBefore(rowSentinel, referenceNode || null);
+
+  return rowSentinel;
+}
+
+function disconnectRowObserver() {
+  if (catalogRowObserver) {
+    catalogRowObserver.disconnect();
+    catalogRowObserver = null;
+  }
+}
+
+function scheduleCatalogCard(callback) {
+  window.setTimeout(() => {
+    window.requestAnimationFrame(callback);
+  }, 46);
+}
+
+function renderBookGridInRows(entries, filteredCount) {
+  renderSequence += 1;
+  const sequence = renderSequence;
+  const columnCount = getCatalogColumnCount();
+  const sentinel = ensureRowSentinel();
+  let startIndex = 0;
+  let renderedCount = 0;
+
+  bookGrid.innerHTML = "";
+  bookGrid.classList.add("is-streaming");
+  disconnectRowObserver();
+
+  if (sentinel) {
+    sentinel.hidden = true;
+  }
+
+  const syncProgress = () => {
+    if (bookCount) {
+      bookCount.textContent = `${filteredCount}권을 보고 있어요`;
+    }
+
+    if (bookState) {
+      bookState.textContent = getStateLabel(filteredCount, renderedCount);
+    }
+  };
+
+  const finishStreaming = () => {
+    bookGrid.classList.remove("is-streaming");
+    disconnectRowObserver();
+
+    if (sentinel) {
+      sentinel.hidden = true;
+    }
+
+    updateLoadMore(filteredCount);
+  };
+
+  const armNextRowObserver = () => {
+    if (!sentinel || startIndex >= entries.length || sequence !== renderSequence) {
+      finishStreaming();
+      return;
+    }
+
+    sentinel.hidden = false;
+    disconnectRowObserver();
+
+    catalogRowObserver = new IntersectionObserver(
+      (observerEntries) => {
+        const shouldLoadNextRow = observerEntries.some((entry) => entry.isIntersecting);
+
+        if (!shouldLoadNextRow) {
+          return;
+        }
+
+        disconnectRowObserver();
+        sentinel.hidden = true;
+        streamNextRow();
+      },
+      {
+        rootMargin: "0px 0px 220px 0px",
+        threshold: 0.01,
+      }
+    );
+
+    catalogRowObserver.observe(sentinel);
+  };
+
+  const streamNextRow = () => {
+    if (sequence !== renderSequence) {
+      return;
+    }
+
+    const rowEntries = entries.slice(startIndex, startIndex + columnCount);
+    if (!rowEntries.length) {
+      finishStreaming();
+      return;
+    }
+
+    let rowOffset = 0;
+
+    const streamCard = () => {
+      if (sequence !== renderSequence) {
+        return;
+      }
+
+      const currentEntry = rowEntries[rowOffset];
+
+      if (!currentEntry) {
+        startIndex += rowEntries.length;
+        renderedCount = startIndex;
+        syncProgress();
+        armNextRowObserver();
+        return;
+      }
+
+      const [id, book] = currentEntry;
+      bookGrid.insertAdjacentHTML("beforeend", buildBookCardMarkup(id, book, "is-stream-enter"));
+      rowOffset += 1;
+      scheduleCatalogCard(streamCard);
+    };
+
+    streamCard();
+  };
+
+  if (!entries.length) {
+    renderedCount = 0;
+    syncProgress();
+    finishStreaming();
+    return;
+  }
+
+  renderedCount = 0;
+  syncProgress();
+  streamNextRow();
+}
+
+function cancelPendingCatalogAnimation() {
+  renderSequence += 1;
+  scrollWaitToken += 1;
+
+  window.clearTimeout(deferredRenderTimer);
+  deferredRenderTimer = 0;
+  window.clearTimeout(scrollSettleTimer);
+  scrollSettleTimer = 0;
+
+  if (scrollAnimationFrame) {
+    window.cancelAnimationFrame(scrollAnimationFrame);
+    scrollAnimationFrame = 0;
+  }
+
+  disconnectRowObserver();
+
+  if (bookGrid) {
+    bookGrid.classList.remove("is-streaming");
+  }
+
+  if (rowSentinel) {
+    rowSentinel.hidden = true;
+  }
+}
+
+function queueRenderBooks(delay = 0) {
+  window.clearTimeout(deferredRenderTimer);
+  deferredRenderTimer = 0;
+
+  const runRender = () => {
+    deferredRenderTimer = 0;
+
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        renderBooks();
+      });
+    });
+  };
+
+  if (delay <= 0) {
+    runRender();
+    return;
+  }
+
+  deferredRenderTimer = window.setTimeout(() => {
+    runRender();
+  }, delay);
+}
+
+function getCatalogScrollTop(section) {
+  const sectionTop = window.scrollY + section.getBoundingClientRect().top;
+  const headerOffset = window.innerWidth <= 760 ? 16 : 90;
+  return Math.max(sectionTop - headerOffset, 0);
+}
+
+function animateCatalogScroll(section) {
+  if (!section) {
+    return Promise.resolve();
+  }
+
+  const targetY = getCatalogScrollTop(section);
+
+  if (Math.abs(window.scrollY - targetY) < 6) {
+    window.scrollTo({ top: targetY });
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const token = ++scrollWaitToken;
+    let isSettled = false;
+
+    const finish = () => {
+      if (isSettled) {
+        return;
+      }
+
+      isSettled = true;
+      window.clearTimeout(scrollSettleTimer);
+      scrollSettleTimer = 0;
+
+      if (scrollAnimationFrame) {
+        window.cancelAnimationFrame(scrollAnimationFrame);
+        scrollAnimationFrame = 0;
+      }
+
+      if ("onscrollend" in window) {
+        window.removeEventListener("scrollend", handleScrollEnd);
+      }
+
+      resolve();
+    };
+
+    const finishIfCurrent = () => {
+      if (token !== scrollWaitToken) {
+        finish();
+        return;
+      }
+
+      finish();
+    };
+
+    const checkPosition = () => {
+      if (token !== scrollWaitToken) {
+        finish();
+        return;
+      }
+
+      const remainingDistance = Math.abs(window.scrollY - targetY);
+      if (remainingDistance <= 12) {
+        finish();
+        return;
+      }
+
+      scrollAnimationFrame = window.requestAnimationFrame(checkPosition);
+    };
+
+    const handleScrollEnd = () => {
+      if (Math.abs(window.scrollY - targetY) <= 18) {
+        finishIfCurrent();
+      }
+    };
+
+    if ("onscrollend" in window) {
+      window.addEventListener("scrollend", handleScrollEnd, { passive: true });
+    }
+
+    window.scrollTo({ top: targetY, behavior: "smooth" });
+    scrollAnimationFrame = window.requestAnimationFrame(checkPosition);
+    scrollSettleTimer = window.setTimeout(finishIfCurrent, 760);
+  });
+}
+
+function prepareDeferredCatalogRender() {
+  if (!bookGrid) {
+    return;
+  }
+
+  disconnectRowObserver();
+  bookGrid.classList.remove("is-streaming");
+  bookGrid.innerHTML = "";
+
+  if (bookEmpty) {
+    bookEmpty.hidden = true;
+  }
+
+  if (loadMoreShell) {
+    loadMoreShell.hidden = true;
+  }
+
+  if (rowSentinel) {
+    rowSentinel.hidden = true;
+  }
+}
+
+function getSeriesSortInfo(seriesName, title) {
+  const safeTitle = String(title || "");
+
+  if (seriesName === "제로니모의 환상 모험") {
+    const match = safeTitle.match(/^제로니모의 환상 모험\s*(\d+)\s*[:.]/);
+    return {
+      rank: match ? Number(match[1]) : Number.MAX_SAFE_INTEGER,
+      label: safeTitle,
+    };
+  }
+
+  if (seriesName === "공포의 노트") {
+    const monsterGuide = safeTitle.includes("몬스터 도감");
+    const match = safeTitle.match(/공포의 노트\s*(\d+)/);
+    return {
+      rank: monsterGuide ? 999 : match ? Number(match[1]) : Number.MAX_SAFE_INTEGER,
+      label: safeTitle,
+    };
+  }
+
+  return {
+    rank: Number.MAX_SAFE_INTEGER,
+    label: safeTitle,
+  };
+}
+
+function sortFilteredEntries(entries) {
+  const activeSeriesName =
+    activeFilter === "series" &&
+    featuredCollections.find((collection) => collection.seriesName === activeQueryLabel)?.seriesName;
+
+  if (!activeSeriesName) {
+    return entries;
+  }
+
+  return [...entries].sort(([idA, bookA], [idB, bookB]) => {
+    const infoA = getSeriesSortInfo(activeSeriesName, bookA?.title || idA);
+    const infoB = getSeriesSortInfo(activeSeriesName, bookB?.title || idB);
+
+    if (infoA.rank !== infoB.rank) {
+      return infoA.rank - infoB.rank;
+    }
+
+    return infoA.label.localeCompare(infoB.label, "ko");
+  });
+}
+
+function renderBooks() {
+  if (!bookGrid) {
+    return;
+  }
+
+  const filteredEntries = sortFilteredEntries(
+    bookEntries.filter(([, book]) => bookMatchesFilter(book) && bookMatchesQuery(book))
+  );
+  const visibleEntries = filteredEntries.slice(0, visibleBookCount);
+
+  renderBookGridInRows(visibleEntries, filteredEntries.length);
+
+  if (bookEmpty) {
+    bookEmpty.hidden = filteredEntries.length !== 0;
+  }
+}
+
+function buildCollectionCardMarkup(collection) {
+  const books = collection.ids
+    .map((id) => [id, curatedCatalog[id] || mergedCatalog[id]])
+    .filter(([, book]) => book);
+
+  const totalCount = Number.isFinite(collection.totalCount)
+    ? collection.totalCount
+    : collection.seriesName
+      ? Object.values(mergedCatalog).filter((book) => book?.series === collection.seriesName).length
+      : books.length;
+
+  const covers = books
+    .slice(0, 3)
+    .map(
+      ([, book]) => `
+        <img src="${escapeHtml(book.cover)}" alt="${escapeHtml(book.title)} 표지" loading="lazy" />
+      `
+    )
+    .join("");
+
+  const titles = books
+    .slice(0, 3)
+    .map(([, book]) => `<li>${escapeHtml(book.title)}</li>`)
+    .join("");
+
+  const leadId = books[0]?.[0];
+
+  return `
+    <article class="collection-card tone-${escapeHtml(collection.tone)}">
+      <div class="collection-card-head">
+        <div>
+          <span class="collection-kicker">${escapeHtml(totalCount)}권 시리즈</span>
+          <strong>${escapeHtml(collection.title)}</strong>
+        </div>
+        <span class="collection-query">${escapeHtml(collection.query)}</span>
+      </div>
+      <p>${escapeHtml(collection.description)}</p>
+      <div class="collection-cover-strip">${covers}</div>
+      <ul class="collection-list list-reset">${titles}</ul>
+      <div class="collection-actions">
+        <button class="ghost-button collection-trigger" type="button" data-series-query="${escapeHtml(collection.query)}">이 시리즈만 보기 <span class="arrow">→</span></button>
+        ${leadId ? `<a class="pill-link collection-detail-link" href="./book-detail.html?book=${encodeURIComponent(leadId)}">대표 도서 보기</a>` : ""}
+      </div>
+    </article>
+  `;
+}
+
+function renderFeaturedCollections() {
+  if (!featuredSeriesGrid) {
+    return;
+  }
+
+  featuredSeriesGrid.innerHTML = featuredCollections.map((collection) => buildCollectionCardMarkup(collection)).join("");
+
+  featuredSeriesGrid.querySelectorAll("[data-series-query]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const query = button.dataset.seriesQuery || "";
+      const matchedCollection = featuredCollections.find((collection) => collection.query === query);
+      const catalogSection = document.querySelector("#catalog-section");
+      const needsDeferredRender = Boolean(matchedCollection?.totalCount && matchedCollection.totalCount >= 20);
+
+      activeQuery = query.toLowerCase();
+      activeQueryLabel = query;
+      resetVisibleBooks();
+      setActiveFilter("series");
+
+      if (bookSearch) {
+        bookSearch.value = matchedCollection?.seriesName || query;
+      }
+
+      if (matchedCollection?.seriesName) {
+        activeQuery = matchedCollection.seriesName.toLowerCase();
+        activeQueryLabel = matchedCollection.seriesName;
+      }
+
+      if (bookCount) {
+        bookCount.textContent = `${activeQueryLabel} 시리즈를 불러오는 중이에요`;
+      }
+
+      if (bookState) {
+        bookState.textContent = needsDeferredRender
+          ? "먼저 목록 위치로 부드럽게 이동한 뒤, 책이 한 권씩 왼쪽에서 오른쪽으로 자연스럽게 이어지게 할게요."
+          : "목록 위치로 이동한 뒤 바로 보여드릴게요.";
+      }
+
+      cancelPendingCatalogAnimation();
+
+      if (needsDeferredRender) {
+        prepareDeferredCatalogRender();
+      }
+
+      animateCatalogScroll(catalogSection).then(() => {
+        queueRenderBooks(needsDeferredRender ? 90 : 30);
+      });
+    });
+  });
+}
+
+function renderRecommendations() {
+  if (!recommendationGrid) {
+    return;
+  }
+
+  const recommendationMarkup = recommendationIds
+    .map((id) => [id, curatedCatalog[id] || mergedCatalog[id]])
+    .filter(([, book]) => book)
+    .map(
+      ([id, book]) => `
+        <a class="compact-recommend-card" href="./book-detail.html?book=${encodeURIComponent(id)}">
+          <img src="${escapeHtml(book.cover)}" alt="${escapeHtml(book.title)} 표지" loading="lazy" />
+          <div>
+            <strong>${escapeHtml(book.title)}</strong>
+            <span>${escapeHtml(truncateText(book.summary, 64))}</span>
+          </div>
+        </a>
+      `
+    )
+    .join("");
+
+  recommendationGrid.innerHTML = recommendationMarkup;
+}
+
+bookFilters.forEach((button) => {
+  button.addEventListener("click", () => {
+    cancelPendingCatalogAnimation();
+    resetVisibleBooks();
+    setActiveFilter(button.dataset.bookFilter || "all");
+    renderBooks();
+  });
+});
+
+if (resetCatalogButton) {
+  resetCatalogButton.addEventListener("click", () => {
+    resetCatalogView();
+  });
+}
+
+if (bookSearch) {
+  bookSearch.addEventListener("input", (event) => {
+    cancelPendingCatalogAnimation();
+    activeQueryLabel = event.target.value.trim();
+    activeQuery = activeQueryLabel.toLowerCase();
+    resetVisibleBooks();
+    renderBooks();
+  });
+}
+
+if (loadMoreButton) {
+  loadMoreButton.addEventListener("click", () => {
+    cancelPendingCatalogAnimation();
+    visibleBookCount += PAGE_SIZE;
+    renderBooks();
+  });
+}
+
+if (heroTotal) {
+  heroTotal.textContent = `${bookEntries.length}권`;
+}
+
+if (heroSeries) {
+  const seriesCount = new Set(bookEntries.map(([, book]) => book.series).filter(Boolean)).size;
+  heroSeries.textContent = `${seriesCount}개`;
+}
+
+if (heroAges) {
+  const ageCount = ["baby", "elementary"].filter((filter) =>
+    bookEntries.some(([, book]) => Array.isArray(book.filters) && book.filters.includes(filter))
+  ).length;
+  heroAges.textContent = `${ageCount}축`;
+}
+
+if (heroAges) {
+  const heroBrowseCard = heroAges.closest(".catalog-stat-card");
+  const heroBrowseLabel = heroBrowseCard?.querySelector("span");
+  const heroBrowseDescription = heroBrowseCard?.querySelector("p");
+
+  heroAges.textContent = "시리즈+검색";
+
+  if (heroBrowseLabel) {
+    heroBrowseLabel.textContent = "빠른 찾기";
+  }
+
+  if (heroBrowseDescription) {
+    heroBrowseDescription.textContent = "시리즈와 검색어로 원하는 책을 바로 좁혀 볼 수 있어요.";
+  }
+}
+
+renderFeaturedCollections();
+renderBooks();
+renderRecommendations();
