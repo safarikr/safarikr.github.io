@@ -292,6 +292,86 @@ const mergedOfficialSeriesLabels = new Set([
   "제로니모의 퍼니월드",
   "슈퍼히어로즈",
 ]);
+const officialSeriesSource = Array.isArray(window.safariOfficialSeriesData) ? window.safariOfficialSeriesData : [];
+const officialSeriesByLabel = new Map(officialSeriesSource.map((series) => [series.label, series]));
+const seriesAudienceOrder = {
+  infant: 0,
+  preschool: 1,
+  elementary: 2,
+};
+const seriesDisplayLabelOverrides = {
+  "불빛 그림책 시리즈": "불빛 그림책",
+};
+const customSeriesOptionSeeds = [
+  {
+    key: "geronimo",
+    label: "제로니모",
+    officialLabels: [
+      "제로니모의 환상 모험",
+      "제로니모의 퍼니월드",
+      "제로니모의 환상 모험 PLUS",
+      "제로니모의 환상 모험 그래픽노블",
+      "제로니모의 환상 모험 만화",
+      "제로니모의 환상 모험 클래식",
+      "슈퍼히어로즈",
+    ],
+    titleIncludes: ["제로니모"],
+    preferredAudience: "elementary",
+  },
+  {
+    key: "franny",
+    label: "프래니",
+    officialLabels: ["엽기 과학자 프래니"],
+    titleIncludes: ["엽기 과학자 프래니", "엽기과학자 프래니"],
+    preferredAudience: "elementary",
+  },
+  {
+    key: "lemoncello",
+    label: "레몬첼로",
+    seriesNames: ["레몬첼로 도서관"],
+    titleIncludes: ["레몬첼로"],
+    preferredAudience: "elementary",
+  },
+  {
+    key: "horror-note",
+    label: "공포의 노트",
+    officialLabels: ["경고! 절대 열면 안 되는 공포의 노트"],
+    titleIncludes: ["공포의 노트"],
+    preferredAudience: "elementary",
+  },
+  {
+    key: "24store",
+    label: "24분 편의점",
+    officialLabels: ["24분 편의점"],
+    titleIncludes: ["24분 편의점"],
+    preferredAudience: "elementary",
+  },
+  {
+    key: "macmillan",
+    label: "맥밀런 월드베스트",
+    officialLabels: ["맥밀런 월드베스트 한글"],
+    preferredAudience: "preschool",
+  },
+  {
+    key: "dino",
+    label: "공룡 시리즈",
+    titleIncludes: ["공룡 구급대", "공룡 자동차", "공룡 해적선", "공룡 우주 로켓", "공룡 농장"],
+    preferredAudience: "preschool",
+  },
+  {
+    key: "the-track",
+    label: "더 트랙",
+    seriesNames: ["TRACK", "더 트랙"],
+    titleIncludes: ["TRACK 1.", "TRACK 2."],
+    preferredAudience: "elementary",
+  },
+  {
+    key: "i-know",
+    label: "나는 알아요",
+    officialLabels: ["나는 알아요"],
+    preferredAudience: "elementary",
+  },
+];
 const PAGE_SIZE = Number.MAX_SAFE_INTEGER;
 const EAGER_COVER_COUNT = 14;
 const seriesTextOptions = buildSeriesTextOptions();
@@ -392,89 +472,154 @@ function resolveOptionAudience(books) {
   return "infant";
 }
 
+function getBookCode(book) {
+  return String(book?.bookCode || window.extractSafariBookCode?.(book?.officialUrl) || "").trim();
+}
+
+function buildBookCodeEntryLookup() {
+  const lookup = new Map();
+
+  bookEntries.forEach(([id, book]) => {
+    const bookCode = getBookCode(book);
+
+    if (!bookCode) {
+      return;
+    }
+
+    if (!lookup.has(bookCode)) {
+      lookup.set(bookCode, []);
+    }
+
+    lookup.get(bookCode).push(id);
+  });
+
+  return lookup;
+}
+
+function resolveSeriesAudienceFromAge(age, fallbackBooks) {
+  const text = String(age || "").trim();
+
+  if (/초등|청소년|고학년|저학년|전학년/u.test(text) || /6~10|6세~10세/u.test(text)) {
+    return "elementary";
+  }
+
+  if (/영아|0~|0세|1세|2세|아장아장|토이북/u.test(text)) {
+    return "infant";
+  }
+
+  if (/유아|3~|4~|5~|3-|4-|5-|3세|4세|5세|6세|7세/u.test(text)) {
+    return "preschool";
+  }
+
+  return resolveOptionAudience(fallbackBooks);
+}
+
+function uniqueIds(values) {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function mapOfficialSeriesMatchIds(seriesRecord, bookCodeEntryLookup) {
+  const matchIds = [];
+
+  (seriesRecord?.bookCodes || []).forEach((bookCode) => {
+    const entryIds = bookCodeEntryLookup.get(String(bookCode || "").trim());
+
+    if (entryIds?.length) {
+      matchIds.push(...entryIds);
+    }
+  });
+
+  return uniqueIds(matchIds);
+}
+
+function buildCustomSeriesOption(seed, order, bookCodeEntryLookup) {
+  const officialRecords = (seed.officialLabels || [])
+    .map((label) => officialSeriesByLabel.get(label))
+    .filter(Boolean);
+  const officialMatchIds = officialRecords.flatMap((record) => mapOfficialSeriesMatchIds(record, bookCodeEntryLookup));
+  const titleMatchIds = bookEntries
+    .filter(([, book]) => {
+      const title = String(book?.title || "");
+      return Array.isArray(seed.titleIncludes) && seed.titleIncludes.some((keyword) => title.includes(keyword));
+    })
+    .map(([id]) => id);
+  const matchIds = uniqueIds([...officialMatchIds, ...titleMatchIds]);
+
+  if (!matchIds.length) {
+    return null;
+  }
+
+  const matchedBooks = matchIds.map((id) => mergedCatalog[id]).filter(Boolean);
+  const primaryRecord = officialRecords[0];
+
+  return {
+    key: seed.key,
+    label: seed.label,
+    seriesNames: uniqueIds([seed.label, ...(seed.seriesNames || []), ...(seed.officialLabels || [])]),
+    titleIncludes: seed.titleIncludes || [],
+    token: buildSeriesToken(seed.key),
+    totalCount: matchIds.length,
+    matchIds,
+    audience: seed.preferredAudience || resolveSeriesAudienceFromAge(primaryRecord?.age, matchedBooks),
+    sortIndex: order,
+  };
+}
+
 function buildSeriesTextOptions() {
-  const catalogBooks = Object.values(mergedCatalog);
+  const bookCodeEntryLookup = buildBookCodeEntryLookup();
   const options = [];
-  const coveredSeriesNames = new Set();
-  const coveredLabels = new Set();
+  const usedOfficialLabels = new Set();
 
-  presetSeriesOptionSeeds.forEach((seed) => {
-    const matchedEntries = bookEntries.filter(([id, book]) => entryMatchesSeriesOption(id, book, seed));
-    const matchedBooks = matchedEntries.map(([, book]) => book);
-    const totalCount = matchedEntries.length;
+  customSeriesOptionSeeds.forEach((seed, index) => {
+    const option = buildCustomSeriesOption(seed, index, bookCodeEntryLookup);
 
-    if (!totalCount) {
+    if (!option) {
       return;
     }
 
-    (seed.seriesNames || []).forEach((name) => coveredSeriesNames.add(name));
-    coveredLabels.add(seed.label);
-    options.push({
-      ...seed,
-      token: buildSeriesToken(seed.key),
-      totalCount,
-      matchIds: matchedEntries.map(([id]) => id),
-      audience: resolveOptionAudience(matchedBooks),
-    });
+    (seed.officialLabels || []).forEach((label) => usedOfficialLabels.add(label));
+    options.push(option);
   });
 
-  officialSeriesLabels.forEach((label, index) => {
-    if (coveredLabels.has(label) || mergedOfficialSeriesLabels.has(label)) {
+  officialSeriesSource.forEach((seriesRecord) => {
+    if (usedOfficialLabels.has(seriesRecord.label)) {
       return;
     }
 
-    const alias = officialSeriesAliases[label] || {};
-    const seed = {
-      key: `official-${index}`,
+    const matchIds = mapOfficialSeriesMatchIds(seriesRecord, bookCodeEntryLookup);
+
+    if (!matchIds.length) {
+      return;
+    }
+
+    const matchedBooks = matchIds.map((id) => mergedCatalog[id]).filter(Boolean);
+    const label = seriesDisplayLabelOverrides[seriesRecord.label] || seriesRecord.label;
+
+    options.push({
+      key: `official-${seriesRecord.scode}`,
       label,
-      seriesNames: alias.seriesNames || [label],
-      titleIncludes: alias.titleIncludes || [label],
-    };
-    const matchedEntries = bookEntries.filter(([id, book]) => entryMatchesSeriesOption(id, book, seed));
-    const matchedBooks = matchedEntries.map(([, book]) => book);
-    const totalCount = matchedEntries.length;
+      seriesNames: uniqueIds([label, seriesRecord.label]),
+      token: buildSeriesToken(`official-${seriesRecord.scode}`),
+      totalCount: matchIds.length,
+      matchIds,
+      audience: resolveSeriesAudienceFromAge(seriesRecord.age, matchedBooks),
+      sortIndex: customSeriesOptionSeeds.length + options.length,
+    });
+  });
 
-    if (!totalCount) {
-      return;
+  return options.sort((optionA, optionB) => {
+    const audienceDiff = (seriesAudienceOrder[optionA.audience] || 0) - (seriesAudienceOrder[optionB.audience] || 0);
+
+    if (audienceDiff !== 0) {
+      return audienceDiff;
     }
 
-    coveredLabels.add(label);
-    (seed.seriesNames || []).forEach((name) => coveredSeriesNames.add(name));
-    options.push({
-      ...seed,
-      token: buildSeriesToken(seed.key),
-      totalCount,
-      matchIds: matchedEntries.map(([id]) => id),
-      audience: resolveOptionAudience(matchedBooks),
-    });
+    if (optionA.sortIndex !== optionB.sortIndex) {
+      return optionA.sortIndex - optionB.sortIndex;
+    }
+
+    return optionA.label.localeCompare(optionB.label, "ko");
   });
-
-  const dynamicSeriesNames = Array.from(
-    new Set(
-      catalogBooks
-        .map((book) => String(book?.series || "").trim())
-        .filter(Boolean)
-    )
-  )
-    .filter((name) => !coveredSeriesNames.has(name))
-    .sort((a, b) => a.localeCompare(b, "ko"));
-
-  dynamicSeriesNames.forEach((name, index) => {
-    const matchedEntries = bookEntries.filter(([, book]) => String(book?.series || "").trim() === name);
-    const matchedBooks = matchedEntries.map(([, book]) => book);
-
-    options.push({
-      key: `dynamic-${index}`,
-      label: name,
-      seriesNames: [name],
-      token: buildSeriesToken(`dynamic-${index}`),
-      totalCount: matchedEntries.length,
-      matchIds: matchedEntries.map(([id]) => id),
-      audience: resolveOptionAudience(matchedBooks),
-    });
-  });
-
-  return options;
 }
 
 function getActiveSeriesOption() {
