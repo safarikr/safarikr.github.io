@@ -135,6 +135,13 @@
     "1500400400055",
   ]);
 
+  const excludedOfficialBookCodes = new Set([
+    "1501402600013",
+    "1501402600014",
+    "1501402600015",
+    "1501402600016",
+  ]);
+
   function getSeriesOverride(title, bookCode) {
     if (macmillanWorldBestCodes.has(String(bookCode || ""))) {
       return "맥밀런 월드베스트";
@@ -398,6 +405,10 @@
 
       const bookCode = String(book.bookCode || "");
       const normalizedTitle = normalizeTitle(book.title);
+
+      if (bookCode && excludedOfficialBookCodes.has(bookCode)) {
+        return;
+      }
 
       if (
         (bookCode && curatedCodes.has(bookCode)) ||
