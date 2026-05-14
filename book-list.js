@@ -190,6 +190,85 @@ const presetSeriesOptionSeeds = [
     seriesNames: ["\uB098\uB294 \uC54C\uC544\uC694!"],
   },
 ];
+
+const officialSeriesLabels = [
+  "24분 편의점",
+  "360도 회전목마 팝업북",
+  "GoGo! 방과 후 자기주도 학습만화 : 쿵",
+  "가장 완전하게 만든",
+  "개구쟁이 해리",
+  "경고! 절대 열면 안 되는 공포의 노트",
+  "구급 대장 베니와 함께하는 삐뽀삐뽀 119 어린이 교실",
+  "국시꼬랭이 동네-영문",
+  "그림책 홈스쿨링 리틀 사파리",
+  "나는 알아요",
+  "내 맘대로 드로잉 컬러링북",
+  "내 친구 카렐",
+  "두고 두고 읽고 싶은 우리 옛이야기",
+  "똑똑 모두누리",
+  "로즈 클럽의 미스터리 모험",
+  "마법의 스톤 애뮬릿",
+  "마스터피스",
+  "만능 엽기 박사 빅터",
+  "맥밀런 월드베스트 한글",
+  "멍탐정 셜록 본즈",
+  "방방곡곡 구석구석 옛이야기",
+  "보더리스",
+  "북유럽 우리 아기 첫 토이북",
+  "불빛 그림책 시리즈",
+  "세상의 모든 지식",
+  "슈퍼히어로즈",
+  "신나게 놀자!",
+  "실제 크기로 보는 놀라운 동물들",
+  "아장아장",
+  "아주아주 놀라운 세계그림지도",
+  "어린이 자기 계발",
+  "엽기 과학자 프래니",
+  "오솔길",
+  "우리 문화 속 수수께끼",
+  "우리 문화 우리 명장",
+  "우리 아이 최고의 선택",
+  "이럴 때 그림책",
+  "자꾸자꾸 하고 싶은 두뇌 놀이책",
+  "제로니모의 퍼니월드",
+  "제로니모의 환상 모험",
+  "제로니모의 환상 모험 PLUS",
+  "제로니모의 환상 모험 그래픽노블",
+  "제로니모의 환상 모험 만화",
+  "제로니모의 환상 모험 클래식",
+  "주춧돌",
+  "지식이 번쩍! Creativity Book",
+  "테아시스터즈의 판타지 모험",
+  "톡톡문고",
+  "톰 게이츠와 개좀비",
+  "팩티비티",
+  "페럴 : 까마귀와 말하는 소년",
+  "폭풍 질문 왜요? 왜요?",
+  "플랩을 열며 알아 가는 신나는 지식책",
+  "홈런 HOME LEARN",
+  "환경지킴이",
+];
+
+const officialSeriesAliases = {
+  "경고! 절대 열면 안 되는 공포의 노트": {
+    seriesNames: ["\uACF5\uD3EC\uC758 \uB178\uD2B8"],
+    titleIncludes: ["\uACF5\uD3EC\uC758 \uB178\uD2B8", "경고! 절대 열면 안 되는 공포의 노트"],
+  },
+  "나는 알아요": {
+    seriesNames: ["\uB098\uB294 \uC54C\uC544\uC694!", "\uB098\uB294 \uC54C\uC544\uC694"],
+    titleIncludes: ["\uB098\uB294 \uC54C\uC544\uC694!", "\uB098\uB294 \uC54C\uC544\uC694"],
+  },
+  "맥밀런 월드베스트 한글": {
+    seriesNames: ["\uB9E5\uBC00\uB7F0 \uC6D4\uB4DC\uBCA0\uC2A4\uD2B8"],
+    titleIncludes: ["\uB9E5\uBC00\uB7F0 \uC6D4\uB4DC\uBCA0\uC2A4\uD2B8"],
+  },
+  "불빛 그림책 시리즈": {
+    titleIncludes: ["불빛 그림책"],
+  },
+  "슈퍼히어로즈": {
+    titleIncludes: ["\uC288\uD37C\uD788\uC5B4\uB85C\uC988"],
+  },
+};
 const PAGE_SIZE = Number.MAX_SAFE_INTEGER;
 const EAGER_COVER_COUNT = 14;
 const seriesTextOptions = buildSeriesTextOptions();
@@ -241,16 +320,46 @@ function matchesSeriesOption(book, option) {
 }
 
 function buildSeriesTextOptions() {
+  const catalogBooks = Object.values(mergedCatalog);
   const options = [];
   const coveredSeriesNames = new Set();
+  const coveredLabels = new Set();
 
   presetSeriesOptionSeeds.forEach((seed) => {
-    const totalCount = Object.values(mergedCatalog).filter((book) => matchesSeriesOption(book, seed)).length;
+    const totalCount = catalogBooks.filter((book) => matchesSeriesOption(book, seed)).length;
 
     if (!totalCount) {
       return;
     }
 
+    (seed.seriesNames || []).forEach((name) => coveredSeriesNames.add(name));
+    coveredLabels.add(seed.label);
+    options.push({
+      ...seed,
+      token: buildSeriesToken(seed.key),
+      totalCount,
+    });
+  });
+
+  officialSeriesLabels.forEach((label, index) => {
+    if (coveredLabels.has(label)) {
+      return;
+    }
+
+    const alias = officialSeriesAliases[label] || {};
+    const seed = {
+      key: `official-${index}`,
+      label,
+      seriesNames: alias.seriesNames || [label],
+      titleIncludes: alias.titleIncludes || [label],
+    };
+    const totalCount = catalogBooks.filter((book) => matchesSeriesOption(book, seed)).length;
+
+    if (!totalCount) {
+      return;
+    }
+
+    coveredLabels.add(label);
     (seed.seriesNames || []).forEach((name) => coveredSeriesNames.add(name));
     options.push({
       ...seed,
@@ -261,7 +370,7 @@ function buildSeriesTextOptions() {
 
   const dynamicSeriesNames = Array.from(
     new Set(
-      Object.values(mergedCatalog)
+      catalogBooks
         .map((book) => String(book?.series || "").trim())
         .filter(Boolean)
     )
@@ -275,7 +384,7 @@ function buildSeriesTextOptions() {
       label: name,
       seriesNames: [name],
       token: buildSeriesToken(`dynamic-${index}`),
-      totalCount: Object.values(mergedCatalog).filter((book) => String(book?.series || "").trim() === name).length,
+      totalCount: catalogBooks.filter((book) => String(book?.series || "").trim() === name).length,
     });
   });
 
