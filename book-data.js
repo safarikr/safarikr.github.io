@@ -581,7 +581,7 @@ window.bookCatalog = {
   },
   "one-voice": {
     title: "세상을 바꾸는 하나의 목소리",
-    series: "트랙",
+    series: "",
     author: "에밀리 하워스부스",
     translator: "김은정",
     publisher: "사파리",

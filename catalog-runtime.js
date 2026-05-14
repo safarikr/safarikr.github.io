@@ -170,10 +170,6 @@
       return "\uC5FD\uAE30 \uACFC\uD559\uC790 \uD504\uB798\uB2C8";
     }
 
-    if (safeTitle === "\uC138\uC0C1\uC744 \uBC14\uAFB8\uB294 \uD558\uB098\uC758 \uBAA9\uC18C\uB9AC") {
-      return "\uB354 \uD2B8\uB799";
-    }
-
     const overrides = {
       "야호! 야호! 봄이 왔나 봐!": "맥밀런 월드베스트",
       "내가 정말정말 좋아하는 빨간 장화!": "맥밀런 월드베스트",

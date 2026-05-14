@@ -136,55 +136,63 @@ const featuredCollections = [
   },
 ];
 
-const seriesTextOptions = [
+const presetSeriesOptionSeeds = [
   {
+    key: "geronimo",
     label: "\uC81C\uB85C\uB2C8\uBAA8",
-    query: "\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8",
-    seriesName: "\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8",
+    seriesNames: ["\uC81C\uB85C\uB2C8\uBAA8\uC758 \uD658\uC0C1 \uBAA8\uD5D8"],
+    titleIncludes: ["\uC81C\uB85C\uB2C8\uBAA8"],
   },
   {
+    key: "franny",
     label: "\uD504\uB798\uB2C8",
-    query: "\uC5FD\uAE30 \uACFC\uD559\uC790 \uD504\uB798\uB2C8",
-    seriesName: "\uC5FD\uAE30 \uACFC\uD559\uC790 \uD504\uB798\uB2C8",
+    seriesNames: ["\uC5FD\uAE30 \uACFC\uD559\uC790 \uD504\uB798\uB2C8"],
+    titleIncludes: ["\uC5FD\uAE30 \uACFC\uD559\uC790 \uD504\uB798\uB2C8", "\uC5FD\uAE30\uACFC\uD559\uC790 \uD504\uB798\uB2C8"],
   },
   {
-    label: "\uB808\uBAAC\uCCA8\uB85C",
-    query: "\uB808\uBAAC\uCCA8\uB85C \uB3C4\uC11C\uAD00",
-    seriesName: "\uB808\uBAAC\uCCA8\uB85C \uB3C4\uC11C\uAD00",
+    key: "lemoncello",
+    label: "\uB808\uBAAC\uCCBC\uB85C",
+    seriesNames: ["\uB808\uBAAC\uCCBC\uB85C \uB3C4\uC11C\uAD00"],
+    titleIncludes: ["\uB808\uBAAC\uCCBC\uB85C"],
   },
   {
+    key: "horror-note",
     label: "\uACF5\uD3EC\uC758 \uB178\uD2B8",
-    query: "\uACF5\uD3EC\uC758 \uB178\uD2B8",
-    seriesName: "\uACF5\uD3EC\uC758 \uB178\uD2B8",
+    seriesNames: ["\uACF5\uD3EC\uC758 \uB178\uD2B8"],
+    titleIncludes: ["\uACF5\uD3EC\uC758 \uB178\uD2B8"],
   },
   {
+    key: "24store",
     label: "24\uBD84 \uD3B8\uC758\uC810",
-    query: "24\uBD84 \uD3B8\uC758\uC810",
-    seriesName: "24\uBD84 \uD3B8\uC758\uC810",
+    seriesNames: ["24\uBD84 \uD3B8\uC758\uC810"],
+    titleIncludes: ["24\uBD84 \uD3B8\uC758\uC810"],
   },
   {
+    key: "macmillan",
     label: "\uB9E5\uBC00\uB7F0 \uC6D4\uB4DC\uBCA0\uC2A4\uD2B8",
-    query: "\uB9E5\uBC00\uB7F0 \uC6D4\uB4DC\uBCA0\uC2A4\uD2B8",
-    seriesName: "\uB9E5\uBC00\uB7F0 \uC6D4\uB4DC\uBCA0\uC2A4\uD2B8",
+    seriesNames: ["\uB9E5\uBC00\uB7F0 \uC6D4\uB4DC\uBCA0\uC2A4\uD2B8"],
   },
   {
+    key: "dino",
     label: "\uACF5\uB8E1 \uC2DC\uB9AC\uC988",
-    query: "\uACF5\uB8E1 \uC2DC\uB9AC\uC988",
-    seriesName: "\uACF5\uB8E1 \uC2DC\uB9AC\uC988",
+    seriesNames: ["\uACF5\uB8E1 \uC2DC\uB9AC\uC988"],
+    titleIncludes: ["\uACF5\uB8E1 \uAD6C\uAE09\uB300", "\uACF5\uB8E1 \uC790\uB3D9\uCC28", "\uACF5\uB8E1 \uD574\uC801\uC120", "\uACF5\uB8E1 \uC6B0\uC8FC \uB85C\uCF13", "\uACF5\uB8E1 \uB18D\uC7A5"],
   },
   {
+    key: "the-track",
     label: "\uB354 \uD2B8\uB799",
-    query: "\uB354 \uD2B8\uB799",
-    seriesName: "\uB354 \uD2B8\uB799",
+    seriesNames: ["TRACK", "\uB354 \uD2B8\uB799"],
+    titleIncludes: ["TRACK 1.", "TRACK 2.", "\uACE0\uC2A4\uD2B8", "\uD30C\uD2F0\uB098"],
   },
   {
+    key: "i-know",
     label: "\uB098\uB294 \uC54C\uC544\uC694",
-    query: "\uB098\uB294 \uC54C\uC544\uC694!",
-    seriesName: "\uB098\uB294 \uC54C\uC544\uC694!",
+    seriesNames: ["\uB098\uB294 \uC54C\uC544\uC694!"],
   },
 ];
 const PAGE_SIZE = Number.MAX_SAFE_INTEGER;
 const EAGER_COVER_COUNT = 14;
+const seriesTextOptions = buildSeriesTextOptions();
 let activeFilter = "all";
 let activeQuery = "";
 let activeQueryLabel = "";
@@ -213,6 +221,75 @@ function truncateText(value, maxLength) {
   return `${text.slice(0, maxLength).trim()}…`;
 }
 
+function buildSeriesToken(key) {
+  return `__series__:${key}`;
+}
+
+function matchesSeriesOption(book, option) {
+  const title = String(book?.title || "");
+  const series = String(book?.series || "");
+
+  if (Array.isArray(option?.seriesNames) && option.seriesNames.some((name) => name === series)) {
+    return true;
+  }
+
+  if (Array.isArray(option?.titleIncludes) && option.titleIncludes.some((keyword) => title.includes(keyword))) {
+    return true;
+  }
+
+  return false;
+}
+
+function buildSeriesTextOptions() {
+  const options = [];
+  const coveredSeriesNames = new Set();
+
+  presetSeriesOptionSeeds.forEach((seed) => {
+    const totalCount = Object.values(mergedCatalog).filter((book) => matchesSeriesOption(book, seed)).length;
+
+    if (!totalCount) {
+      return;
+    }
+
+    (seed.seriesNames || []).forEach((name) => coveredSeriesNames.add(name));
+    options.push({
+      ...seed,
+      token: buildSeriesToken(seed.key),
+      totalCount,
+    });
+  });
+
+  const dynamicSeriesNames = Array.from(
+    new Set(
+      Object.values(mergedCatalog)
+        .map((book) => String(book?.series || "").trim())
+        .filter(Boolean)
+    )
+  )
+    .filter((name) => !coveredSeriesNames.has(name))
+    .sort((a, b) => a.localeCompare(b, "ko"));
+
+  dynamicSeriesNames.forEach((name, index) => {
+    options.push({
+      key: `dynamic-${index}`,
+      label: name,
+      seriesNames: [name],
+      token: buildSeriesToken(`dynamic-${index}`),
+      totalCount: Object.values(mergedCatalog).filter((book) => String(book?.series || "").trim() === name).length,
+    });
+  });
+
+  return options;
+}
+
+function getActiveSeriesOption() {
+  if (!activeQuery.startsWith("__series__:")) {
+    return null;
+  }
+
+  return seriesTextOptions.find((option) => option.token === activeQuery) || null;
+}
+
 function setActiveFilter(nextFilter) {
   activeFilter = nextFilter;
   bookFilters.forEach((item) => item.classList.toggle("active", item.dataset.bookFilter === nextFilter));
@@ -227,21 +304,21 @@ function renderSeriesTextList() {
     return;
   }
 
-  const activeSeriesName = activeFilter === "series" ? activeQueryLabel : "";
+  const activeSeriesOption = getActiveSeriesOption();
 
   seriesList.innerHTML = seriesTextOptions
     .map((option) => {
-      const isActive = option.seriesName === activeSeriesName;
+      const isActive = activeSeriesOption?.key === option.key;
       const className = ["series-text-button", isActive ? "is-active" : ""].filter(Boolean).join(" ");
 
-      return `<button class="${className}" type="button" data-series-option="${escapeHtml(option.seriesName)}">${escapeHtml(option.label)}</button>`;
+      return `<button class="${className}" type="button" data-series-option="${escapeHtml(option.key)}">${escapeHtml(option.label)}</button>`;
     })
     .join("");
 
   seriesList.querySelectorAll("[data-series-option]").forEach((button) => {
     button.addEventListener("click", () => {
-      const seriesName = button.dataset.seriesOption || "";
-      const option = seriesTextOptions.find((item) => item.seriesName === seriesName);
+      const seriesKey = button.dataset.seriesOption || "";
+      const option = seriesTextOptions.find((item) => item.key === seriesKey);
 
       if (!option) {
         return;
@@ -250,8 +327,8 @@ function renderSeriesTextList() {
       cancelPendingCatalogAnimation();
       resetVisibleBooks();
       setActiveFilter("series");
-      activeQuery = option.query.toLowerCase();
-      activeQueryLabel = option.seriesName;
+      activeQuery = option.token;
+      activeQueryLabel = option.label;
 
       if (bookSearch) {
         bookSearch.value = option.label;
@@ -291,6 +368,12 @@ function bookMatchesFilter(book) {
 }
 
 function bookMatchesQuery(book) {
+  const activeSeriesOption = activeFilter === "series" ? getActiveSeriesOption() : null;
+
+  if (activeSeriesOption) {
+    return matchesSeriesOption(book, activeSeriesOption);
+  }
+
   if (!activeQuery) {
     return true;
   }
@@ -755,8 +838,51 @@ function prepareDeferredCatalogRender() {
   }
 }
 
-function getSeriesSortInfo(seriesName, title) {
+function getSeriesSortInfo(seriesKey, title) {
   const safeTitle = String(title || "");
+
+  return getResolvedSeriesSortInfo(seriesKey, safeTitle);
+
+  if (seriesKey === "geronimo") {
+    const fantasyMatch = safeTitle.match(/\uD658\uC0C1\s?\uBAA8\uD5D8\s*(\d+)/u);
+    const plusMatch = safeTitle.match(/\uD50C\uB7EC\uC2A4\s*(\d+)/u);
+    const funnyMatch = safeTitle.match(/\uD37C\uB2C8\uC6D4\uB4DC\s*(\d+)/u);
+    const graphicMatch = safeTitle.match(/\uADF8\uB798\uD53D\uB178\uBE14\s*(\d+)/u);
+    const heroMatch = safeTitle.match(/\uC288\uD37C\uD788\uC5B4\uB85C\uC988\s*(\d+)/u);
+
+    if (fantasyMatch) return { rank: Number(fantasyMatch[1]), label: safeTitle };
+    if (safeTitle.includes("\uC2A4\uD398\uC15C")) return { rank: 100, label: safeTitle };
+    if (plusMatch) return { rank: 200 + Number(plusMatch[1]), label: safeTitle };
+    if (funnyMatch) return { rank: 300 + Number(funnyMatch[1]), label: safeTitle };
+    if (graphicMatch) return { rank: 400 + Number(graphicMatch[1]), label: safeTitle };
+    if (heroMatch) return { rank: 500 + Number(heroMatch[1]), label: safeTitle };
+  }
+
+  if (seriesKey === "horror-note") {
+    const monsterGuide = safeTitle.includes("\uBAAC\uC2A4\uD130 \uB3C4\uAC10");
+    const match = safeTitle.match(/\uACF5\uD3EC\uC758\s?\uB178\uD2B8\s*(\d+)/u);
+    return {
+      rank: monsterGuide ? 999 : match ? Number(match[1]) : Number.MAX_SAFE_INTEGER,
+      label: safeTitle,
+    };
+  }
+
+  if (seriesKey === "franny") {
+    const special = safeTitle.includes("\uD2B9\uBCC4\uD310") || safeTitle.includes("\uAC8C\uC784\uBD81");
+    const match = safeTitle.match(/\uD504\uB798\uB2C8\s*(\d+)/u);
+    return {
+      rank: special ? 500 + (match ? Number(match[1]) : 0) : match ? Number(match[1]) : Number.MAX_SAFE_INTEGER,
+      label: safeTitle,
+    };
+  }
+
+  if (seriesKey === "24store") {
+    const match = safeTitle.match(/24\uBD84\s?\uD3B8\uC758\uC810\s*(\d+)/u);
+    return {
+      rank: match ? Number(match[1]) : Number.MAX_SAFE_INTEGER,
+      label: safeTitle,
+    };
+  }
 
   if (seriesName === "제로니모의 환상 모험") {
     const match = safeTitle.match(/^제로니모의 환상 모험\s*(\d+)\s*[:.]/);
@@ -781,16 +907,136 @@ function getSeriesSortInfo(seriesName, title) {
   };
 }
 
-function sortFilteredEntries(entries) {
-  const activeSeriesName = activeFilter === "series" ? activeQueryLabel : "";
+function getResolvedSeriesSortInfo(seriesKey, title) {
+  const safeTitle = String(title || "");
 
-  if (!activeSeriesName) {
+  if (seriesKey === "geronimo") {
+    const fantasyMatch = safeTitle.match(/\uD658\uC0C1\s?\uBAA8\uD5D8\s*(\d+)/u);
+    const plusMatch = safeTitle.match(/\uD50C\uB7EC\uC2A4\s*(\d+)/u);
+    const funnyMatch = safeTitle.match(/\uD37C\uB2C8\uC6D4\uB4DC\s*(\d+)/u);
+    const graphicMatch = safeTitle.match(/\uADF8\uB798\uD53D\uB178\uBE14\s*(\d+)/u);
+    const heroMatch = safeTitle.match(/\uC288\uD37C\uD788\uC5B4\uB85C\uC988\s*(\d+)/u);
+
+    if (fantasyMatch) {
+      return { rank: Number(fantasyMatch[1]), label: safeTitle };
+    }
+
+    if (safeTitle.includes("\uC2A4\uD398\uC15C")) {
+      return { rank: 100, label: safeTitle };
+    }
+
+    if (plusMatch) {
+      return { rank: 200 + Number(plusMatch[1]), label: safeTitle };
+    }
+
+    if (funnyMatch) {
+      return { rank: 300 + Number(funnyMatch[1]), label: safeTitle };
+    }
+
+    if (graphicMatch) {
+      return { rank: 400 + Number(graphicMatch[1]), label: safeTitle };
+    }
+
+    if (heroMatch) {
+      return { rank: 500 + Number(heroMatch[1]), label: safeTitle };
+    }
+
+    return { rank: 900, label: safeTitle };
+  }
+
+  if (seriesKey === "horror-note") {
+    const monsterGuide = safeTitle.includes("\uBAAC\uC2A4\uD130 \uB3C4\uAC10");
+    const match = safeTitle.match(/\uACF5\uD3EC\uC758\s?\uB178\uD2B8\s*(\d+)/u);
+
+    return {
+      rank: monsterGuide ? 999 : match ? Number(match[1]) : Number.MAX_SAFE_INTEGER,
+      label: safeTitle,
+    };
+  }
+
+  if (seriesKey === "franny") {
+    const special = safeTitle.includes("\uD2B9\uBCC4\uD310") || safeTitle.includes("\uAC8C\uC784\uBD81");
+    const match = safeTitle.match(/\uD504\uB798\uB2C8\s*(\d+)/u);
+
+    return {
+      rank: special ? 500 + (match ? Number(match[1]) : 0) : match ? Number(match[1]) : Number.MAX_SAFE_INTEGER,
+      label: safeTitle,
+    };
+  }
+
+  if (seriesKey === "24store") {
+    const match = safeTitle.match(/24\uBD84\s?\uD3B8\uC758\uC810\s*(\d+)/u);
+
+    return {
+      rank: match ? Number(match[1]) : Number.MAX_SAFE_INTEGER,
+      label: safeTitle,
+    };
+  }
+
+  if (seriesKey === "the-track") {
+    const match = safeTitle.match(/TRACK\s*(\d+)/iu);
+
+    return {
+      rank: match ? Number(match[1]) : Number.MAX_SAFE_INTEGER,
+      label: safeTitle,
+    };
+  }
+
+  if (seriesKey === "dino") {
+    const dinoRanks = [
+      "\uAE34\uAE09 \uCD9C\uB3D9! \uACF5\uB8E1 \uAD6C\uAE09\uB300",
+      "\uC288\uD37C \uCD9C\uB3D9! \uACF5\uB8E1 \uC790\uB3D9\uCC28",
+      "\uC288\uD37C \uBAA8\uD5D8! \uACF5\uB8E1 \uD574\uC801\uC120",
+      "\uC288\uD37C \uBC1C\uC0AC! \uACF5\uB8E1 \uC6B0\uC8FC \uB85C\uCF13",
+      "\uC900\uBE44, \uC601\uCC28! \uACF5\uB8E1 \uB18D\uC7A5",
+    ];
+    const rank = dinoRanks.findIndex((item) => safeTitle.includes(item));
+
+    return {
+      rank: rank === -1 ? Number.MAX_SAFE_INTEGER : rank + 1,
+      label: safeTitle,
+    };
+  }
+
+  if (seriesKey === "lemoncello") {
+    const lemoncelloRanks = [
+      "\uD0C8\uCD9C \uAC8C\uC784",
+      "\uB3C4\uC11C\uAD00 \uC62C\uB9BC\uD53D",
+      "\uCD5C\uCCA8\uB2E8 \uB17C\uD53D\uC158 \uAC8C\uC784 \uB808\uC774\uC2A4",
+    ];
+    const rank = lemoncelloRanks.findIndex((item) => safeTitle.includes(item));
+
+    return {
+      rank: rank === -1 ? Number.MAX_SAFE_INTEGER : rank + 1,
+      label: safeTitle,
+    };
+  }
+
+  if (seriesKey === "i-know") {
+    const match = safeTitle.match(/:\s*(.+)$/u);
+
+    return {
+      rank: Number.MAX_SAFE_INTEGER,
+      label: match ? match[1] : safeTitle,
+    };
+  }
+
+  return {
+    rank: Number.MAX_SAFE_INTEGER,
+    label: safeTitle,
+  };
+}
+
+function sortFilteredEntries(entries) {
+  const activeSeriesOption = activeFilter === "series" ? getActiveSeriesOption() : null;
+
+  if (!activeSeriesOption) {
     return entries;
   }
 
   return [...entries].sort(([idA, bookA], [idB, bookB]) => {
-    const infoA = getSeriesSortInfo(activeSeriesName, bookA?.title || idA);
-    const infoB = getSeriesSortInfo(activeSeriesName, bookB?.title || idB);
+    const infoA = getResolvedSeriesSortInfo(activeSeriesOption.key, bookA?.title || idA);
+    const infoB = getResolvedSeriesSortInfo(activeSeriesOption.key, bookB?.title || idB);
 
     if (infoA.rank !== infoB.rank) {
       return infoA.rank - infoB.rank;
@@ -805,7 +1051,7 @@ function renderBooks() {
     return;
   }
 
-  const waitingForSeriesSelection = activeFilter === "series" && !activeQuery;
+  const waitingForSeriesSelection = activeFilter === "series" && !getActiveSeriesOption();
 
   if (waitingForSeriesSelection) {
     cancelPendingCatalogAnimation();
@@ -925,8 +1171,17 @@ function renderFeaturedCollections() {
       }
 
       if (matchedCollection?.seriesName) {
-        activeQuery = matchedCollection.seriesName.toLowerCase();
-        activeQueryLabel = matchedCollection.seriesName;
+        const matchedSeriesOption = seriesTextOptions.find(
+          (option) => option.label === matchedCollection.seriesName || (option.seriesNames || []).includes(matchedCollection.seriesName)
+        );
+
+        if (matchedSeriesOption) {
+          activeQuery = matchedSeriesOption.token;
+          activeQueryLabel = matchedSeriesOption.label;
+        } else {
+          activeQuery = matchedCollection.seriesName.toLowerCase();
+          activeQueryLabel = matchedCollection.seriesName;
+        }
         renderSeriesTextList();
       }
 

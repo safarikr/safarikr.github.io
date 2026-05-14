@@ -2048,18 +2048,18 @@ input {
 .series-text-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 12px;
+  gap: 22px 28px;
 }
 
 .series-text-button {
   border: 0;
   background: transparent;
-  padding: 0;
+  padding: 2px 0;
   color: rgba(87, 71, 61, 0.9);
   font: inherit;
   font-size: 0.95rem;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.95;
   cursor: pointer;
   transition: color 180ms ease, transform 180ms ease;
 }
