@@ -2354,6 +2354,10 @@ input {
   transition: none;
 }
 
+.books-page .container {
+  width: min(calc(100% - 24px), calc(var(--max-width) + 24px));
+}
+
 .books-page .page-hero {
   padding: 22px 0 8px;
 }
@@ -3830,13 +3834,14 @@ input {
 .event-reference-copy h1 {
   margin: 12px 0 0;
   font-family: var(--heading-font);
-  max-width: 6.8ch;
+  max-width: none;
   font-size: clamp(1.95rem, 3.8vw, 3rem);
   line-height: 1.08;
   letter-spacing: -0.055em;
   font-weight: 650;
   color: var(--text);
   text-wrap: balance;
+  white-space: nowrap;
 }
 
 .event-reference-copy p {
@@ -4145,6 +4150,10 @@ input {
   .event-reference-shell,
   .event-feature-card {
     grid-template-columns: 1fr;
+  }
+
+  .event-reference-copy h1 {
+    white-space: normal;
   }
 
   .event-reference-stats,
