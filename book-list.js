@@ -1453,12 +1453,12 @@ function renderBooks() {
     }
 
     if (bookState) {
-      bookState.textContent = "위의 시리즈 이름을 누르면 해당 도서 목록이 바로 열립니다.";
+      bookState.textContent = "연령대 안에서 원하는 시리즈를 선택하면 도서 목록이 바로 열립니다.";
     }
 
     if (bookEmpty) {
       bookEmpty.hidden = false;
-      bookEmpty.textContent = "시리즈를 선택하면 도서 목록이 여기에 표시됩니다.";
+      bookEmpty.textContent = "시리즈를 먼저 선택해 주세요. 선택한 시리즈의 도서 목록만 아래에 표시됩니다.";
     }
 
     updateLoadMore(0);
