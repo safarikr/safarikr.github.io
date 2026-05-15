@@ -2354,6 +2354,10 @@ input {
   transition: none;
 }
 
+.books-page .container {
+  width: min(calc(100% - 24px), calc(var(--max-width) + 16px));
+}
+
 .books-page .page-hero {
   padding: 22px 0 8px;
 }
