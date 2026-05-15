@@ -3376,9 +3376,12 @@ input {
     grid-template-columns: 1fr;
   }
 
-  .books-page .catalog-grid-rich,
-  .books-page .collection-grid {
+  .books-page .catalog-grid-rich {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .books-page .collection-grid {
+    grid-template-columns: 1fr;
   }
 
   .catalog-summary-actions {
