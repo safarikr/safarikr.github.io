@@ -1272,10 +1272,10 @@
                      "postTitle":  "4살아기랑 독서기록 키즈스콜레 맥밀런월드베스트 \u003c살금살금 덥석\u003e"
                  },
     "살랑 민들레 홀씨 날아":  {
-                         "url":  "https://m.blog.naver.com/PostView.naver?blogId=safaribooks\u0026logNo=224270228884",
-                         "thumbnail":  "./assets/events/event-seed-stick.jpg",
-                         "meta":  "blog.naver.com/safaribooks",
-                         "postTitle":  "[이벤트] 살랑 민들레 홀씨 날아 *사은품 씨드 스틱 증정"
+                         "url":  "https://m.blog.naver.com/PostView.naver?blogId=hayu_ring\u0026logNo=224248326837",
+                         "thumbnail":  "./assets/reviews/blog-auto/살랑민들레홀씨날아.jpg",
+                         "meta":  "blog.naver.com/hayu_ring",
+                         "postTitle":  "살랑 민들레 홀씨 날아 | 봄 그림책 추천 + 독후 활동 씨드 스틱 심기"
                      },
     "살아 있는 역사 문화재":  {
                          "url":  "https://m.blog.naver.com/PostView.naver?blogId=1fhdnschoi\u0026logNo=224200844287",

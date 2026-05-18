@@ -356,12 +356,12 @@
           {
             platform: "사파리 블로그",
             eyebrow: "출판사 소식",
-            title: "사파리 블로그에서 도서 소식 보기",
+            title: "블로그에서 도서 후기 보기",
             label: "블로그 글 보기",
-            description: "독자 후기 대신 출판사 블로그에 올라온 도서 소개와 이벤트 소식을 확인할 수 있습니다.",
-            url: "https://m.blog.naver.com/PostView.naver?blogId=safaribooks&logNo=224270228884",
-            thumbnail: "./assets/events/event-seed-stick.jpg",
-            meta: "blog.naver.com/safaribooks",
+            description: "봄 그림책 추천과 씨드 스틱 활동까지 함께 정리한 실제 블로그 글로 바로 이동합니다.",
+            url: "https://m.blog.naver.com/PostView.naver?blogId=hayu_ring&logNo=224248326837",
+            thumbnail: "./assets/reviews/blog-auto/살랑민들레홀씨날아.jpg",
+            meta: "blog.naver.com/hayu_ring",
           },
         ],
       });
