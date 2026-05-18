@@ -333,6 +333,40 @@
       });
     }
 
+    if (bookCode === "1500401600124") {
+      return normalizeBookAssets({
+        ...book,
+        summary:
+          "민들레 홀씨가 날아가는 장면을 따라가며 봄의 움직임을 부드럽게 느낄 수 있는 그림책입니다.",
+        overview:
+          "봄바람을 타고 날아가는 민들레 홀씨의 여정을 따라가며 계절의 변화와 자연의 흐름을 섬세하게 보여 주는 그림책입니다. 아이와 함께 읽으며 바깥 풍경, 씨앗, 식물 이야기를 자연스럽게 나누기 좋습니다.",
+        description:
+          "이 책은 짧고 부드러운 문장과 포근한 그림으로 봄의 감각을 편안하게 전해 줍니다. 최근 진행 중인 씨드 스틱 증정 이벤트 도서이기도 해서, 도서 소개와 함께 관련 소식까지 이어서 보기 좋도록 정리했습니다.",
+        highlights: ["봄 그림책", "자연 관찰", "이벤트 도서"],
+        reviewLinks: [
+          {
+            platform: "YES24 검색",
+            eyebrow: "온라인서점",
+            title: "예스24에서 도서 정보 찾아보기",
+            label: "예스24 검색 열기",
+            description: "도서 정보와 판매 페이지를 예스24 검색 결과에서 바로 확인할 수 있습니다.",
+            url: "https://www.yes24.com/Product/Search?query=%EC%82%B4%EB%9E%91%20%EB%AF%BC%EB%93%A4%EB%A0%88%20%ED%99%80%EC%94%A8%20%EB%82%A0%EC%95%84",
+            meta: "www.yes24.com · 검색 결과",
+          },
+          {
+            platform: "사파리 블로그",
+            eyebrow: "출판사 소식",
+            title: "사파리 블로그에서 도서 소식 보기",
+            label: "블로그 글 보기",
+            description: "독자 후기 대신 출판사 블로그에 올라온 도서 소개와 이벤트 소식을 확인할 수 있습니다.",
+            url: "https://m.blog.naver.com/PostView.naver?blogId=safaribooks&logNo=224270228884",
+            thumbnail: "./assets/events/event-seed-stick.jpg",
+            meta: "blog.naver.com/safaribooks",
+          },
+        ],
+      });
+    }
+
     return normalizeBookAssets(book);
   }
 
